@@ -45,7 +45,7 @@ Most tools process data entirely in your browser using modern web APIs:
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/toolboxhq.git
+git clone https://github.com/Infaix/ToolboxHQ.git
 cd toolboxhq
 ```
 
