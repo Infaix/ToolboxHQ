@@ -15,7 +15,8 @@ const NAV_LINKS = [
 
 export default function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { theme, toggleTheme } = useTheme();
+  const { theme, toggleTheme, isHydrated } = useTheme();
+  const resolvedTheme = isHydrated ? theme : 'light';
 
   return (
     <nav className="border-b border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
@@ -51,11 +52,11 @@ export default function Navigation() {
             </Link>
             <button
               onClick={toggleTheme}
-              aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+              aria-label={resolvedTheme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
               className="shrink-0 rounded-md p-2 text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
-              title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+              title={resolvedTheme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
             >
-              {theme === 'light' ? (
+              {resolvedTheme === 'light' ? (
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                 </svg>
@@ -70,10 +71,10 @@ export default function Navigation() {
           <div className="flex items-center gap-3 md:hidden">
             <button
               onClick={toggleTheme}
-              aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+              aria-label={resolvedTheme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
               className="rounded-md p-2 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
             >
-              {theme === 'light' ? (
+              {resolvedTheme === 'light' ? (
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                 </svg>
