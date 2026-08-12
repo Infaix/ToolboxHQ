@@ -63,10 +63,25 @@ npm run dev
 
 ## Building for Production
 
+The site is statically exported to `out/`:
+
 ```bash
 npm run build
-npm start
 ```
+
+Preview the static output locally (Cloudflare Pages simulator):
+
+```bash
+npm run preview
+```
+
+## Deploying to Cloudflare Pages
+
+Settings live in `wrangler.jsonc` (project name, compatibility date, output directory) so every deployment uses the same configuration.
+
+- **CI (recommended):** pushes to `main` deploy automatically via `.github/workflows/deploy.yml`. Add the `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` secrets to the GitHub repository.
+- **Manual:** run `npm run deploy` with `wrangler` authenticated (`npx wrangler login`).
+- **Dashboard:** create a Pages project, connect the repo, framework preset **Next.js (Static HTML Export)**, build command `npx next build`, build directory `out`.
 
 ## Adding a New Tool
 
