@@ -5,7 +5,7 @@
  * moving a page would break links). `group` is the toolbox section the tool is
  * displayed under on the homepage, navigation and category pages.
  */
-export type ToolCategory = 'developer' | 'files' | 'pdf';
+export type ToolCategory = 'developer' | 'files' | 'pdf' | 'utilities';
 
 export type ToolGroup =
   | 'pdf'
@@ -105,7 +105,31 @@ export const tools: Tool[] = [
     keywords: ['compress', 'optimize', 'reduce size', 'image'],
     processesFiles: true,
     clientSideOnly: true,
-    relatedTools: ['jpg-to-png', 'png-to-jpg'],
+    relatedTools: ['jpg-to-png', 'png-to-jpg', 'image-resizer'],
+  },
+  {
+    name: 'Image Resizer',
+    slug: 'image-resizer',
+    category: 'files',
+    group: 'images',
+    description: 'Resize images to exact dimensions or scale them by percentage',
+    icon: '📐',
+    keywords: ['resize', 'scale', 'dimensions', 'width', 'height', 'image'],
+    processesFiles: true,
+    clientSideOnly: true,
+    relatedTools: ['image-compressor', 'jpg-to-png', 'png-to-jpg', 'file-converter'],
+  },
+  {
+    name: 'Universal File Converter',
+    slug: 'file-converter',
+    category: 'files',
+    group: 'files',
+    description: 'Convert images and PDFs between JPG, PNG, WebP and PDF formats',
+    icon: '🔄',
+    keywords: ['convert', 'file', 'image', 'pdf', 'jpg', 'jpeg', 'png', 'webp', 'format'],
+    processesFiles: true,
+    clientSideOnly: true,
+    relatedTools: ['image-resizer', 'image-compressor', 'jpg-to-png', 'png-to-jpg', 'pdf-editor'],
   },
   {
     name: 'JSON Formatter',
@@ -163,6 +187,30 @@ export const tools: Tool[] = [
     keywords: ['regex', 'regular expression', 'pattern', 'match'],
     processesFiles: false,
     clientSideOnly: true,
+  },
+  {
+    name: 'Unit Converter',
+    slug: 'unit-converter',
+    category: 'utilities',
+    group: 'utilities',
+    description: 'Convert between units of length, weight, temperature, area, volume, speed, time and data',
+    icon: '⚖️',
+    keywords: ['unit', 'convert', 'length', 'weight', 'temperature', 'area', 'volume', 'speed', 'time', 'data', 'metric', 'imperial'],
+    processesFiles: false,
+    clientSideOnly: true,
+    relatedTools: ['qr-code-generator'],
+  },
+  {
+    name: 'QR Code Generator',
+    slug: 'qr-code-generator',
+    category: 'utilities',
+    group: 'utilities',
+    description: 'Generate QR codes for URLs, text and more with custom size and colors',
+    icon: '🔳',
+    keywords: ['qr', 'qrcode', 'code', 'scanner', 'generate'],
+    processesFiles: false,
+    clientSideOnly: true,
+    relatedTools: ['unit-converter'],
   },
 ];
 

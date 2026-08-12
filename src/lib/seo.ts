@@ -10,7 +10,7 @@ export function buildToolMetadata(slug: string): Metadata {
 
   const path = toolUrl(tool);
   const categoryLabel =
-    tool.category === "files" ? "File" : tool.category === "pdf" ? "PDF" : "Developer";
+    tool.category === "files" ? "File" : tool.category === "pdf" ? "PDF" : tool.category === "utilities" ? "Utility" : "Developer";
 
   return {
     title: tool.name,

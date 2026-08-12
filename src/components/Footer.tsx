@@ -4,7 +4,7 @@ export default function Footer() {
   return (
     <footer className="border-t border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-2 gap-8 md:grid-cols-5">
+        <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 md:grid-cols-6">
           <div>
             <h3 className="mb-4 text-sm font-semibold text-gray-900 dark:text-white">
               PDF Tools
@@ -54,6 +54,16 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/files/image-resizer" className="text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
+                  Image Resizer
+                </Link>
+              </li>
+              <li>
+                <Link href="/files/file-converter" className="text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
+                  Universal File Converter
+                </Link>
+              </li>
+              <li>
                 <Link href="/images" className="text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
                   All image tools
                 </Link>
@@ -89,6 +99,29 @@ export default function Footer() {
               <li>
                 <Link href="/developer/regex-tester" className="text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
                   Regex Tester
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <h3 className="mb-4 text-sm font-semibold text-gray-900 dark:text-white">
+              Utilities
+            </h3>
+            <ul className="space-y-2">
+              <li>
+                <Link href="/utilities/unit-converter" className="text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
+                  Unit Converter
+                </Link>
+              </li>
+              <li>
+                <Link href="/utilities/qr-code-generator" className="text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
+                  QR Code Generator
+                </Link>
+              </li>
+              <li>
+                <Link href="/utilities" className="text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
+                  All utilities
                 </Link>
               </li>
             </ul>

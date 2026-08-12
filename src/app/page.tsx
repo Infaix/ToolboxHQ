@@ -14,14 +14,14 @@ const FEATURED_SLUGS = [
 
 const CATEGORY_SECTIONS = [
   { group: 'pdf' as const, title: 'PDF Tools', tagline: 'Edit, merge, split and compress PDFs.', href: '/pdf' },
-  { group: 'images' as const, title: 'Image Tools', tagline: 'Convert and compress images.', href: '/images' },
+  { group: 'images' as const, title: 'Image Tools', tagline: 'Convert, compress and resize images.', href: '/images' },
   { group: 'developer' as const, title: 'Developer Tools', tagline: 'Format, validate and generate.', href: '/developer' },
+  { group: 'utilities' as const, title: 'Utility Tools', tagline: 'Convert units and generate QR codes.', href: '/utilities' },
 ];
 
 const COMING_SOON = [
   { title: 'Document Tools', tagline: 'Markdown, CSV & document utilities', href: '/documents', icon: '🗂️' },
-  { title: 'Student Tools', tagline: 'Word counts, citations & QR codes', href: '/students', icon: '🎓' },
-  { title: 'Utilities', tagline: 'Calculators, converters & more', href: '/utilities', icon: '🧮' },
+  { title: 'Student Tools', tagline: 'Word counts, citations & more', href: '/students', icon: '🎓' },
 ];
 
 function ToolCard({ tool, highlight = false }: { tool: Tool; highlight?: boolean }) {
@@ -47,7 +47,7 @@ function ToolCard({ tool, highlight = false }: { tool: Tool; highlight?: boolean
   );
 }
 
-function CategorySection({ group, title, tagline, href }: { group: 'pdf' | 'images' | 'developer'; title: string; tagline: string; href: string }) {
+function CategorySection({ group, title, tagline, href }: { group: 'pdf' | 'images' | 'developer' | 'utilities'; title: string; tagline: string; href: string }) {
   const tools = getToolsByGroup(group);
   return (
     <section className="mx-auto mt-20 max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -118,7 +118,7 @@ export default function Home() {
       <section className="mx-auto mt-20 max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-8 dark:border-gray-700 dark:bg-gray-800">
           <h2 className="text-center text-xl font-bold text-gray-900 dark:text-white">More of the toolbox is on the way</h2>
-          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
             {COMING_SOON.map((item) => (
               <Link
                 key={item.href}
