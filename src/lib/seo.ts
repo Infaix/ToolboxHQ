@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { getToolBySlug } from "@/lib/toolRegistry";
+import { SITE_URL } from "@/lib/site";
 
-export const siteUrl = "https://toolboxhq.com";
+export const siteUrl = SITE_URL;
 
 export function buildToolMetadata(slug: string): Metadata {
   const tool = getToolBySlug(slug);

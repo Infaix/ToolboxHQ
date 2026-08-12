@@ -83,6 +83,8 @@ Settings live in `wrangler.jsonc` (project name, compatibility date, output dire
 - **Manual:** run `npm run deploy` with `wrangler` authenticated (`npx wrangler login`).
 - **Dashboard:** create a Pages project, connect the repo, framework preset **Next.js (Static HTML Export)**, build command `npx next build`, build directory `out`.
 
+SEO canonical, sitemap, and robots URLs use the deployment origin automatically (Cloudflare's `CF_PAGES_URL`), falling back to `https://toolboxhq.com`. To pin a custom domain, set the build-time environment variable `NEXT_PUBLIC_SITE_URL=https://yourdomain.com` in the Cloudflare Pages project settings.
+
 ## Adding a New Tool
 
 1. Add the tool to the registry in `src/lib/toolRegistry.ts` (name, slug, category, description, keywords, and related tools). The category pages, homepage, sitemap, and related-tools links are generated from this registry automatically.

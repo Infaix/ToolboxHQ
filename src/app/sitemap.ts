@@ -1,11 +1,10 @@
 import { MetadataRoute } from 'next';
 import { tools } from '@/lib/toolRegistry';
+import { SITE_URL } from '@/lib/site';
 
 export const dynamic = 'force-static';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://toolboxhq.com';
-
   const toolRoutes = tools.map((tool) => `/${tool.category}/${tool.slug}`);
 
   const routes = [
@@ -20,7 +19,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   ];
 
   return routes.map((route) => ({
-    url: `${baseUrl}${route}`,
+    url: `${SITE_URL}${route}`,
     lastModified: new Date(),
     changeFrequency: 'weekly' as const,
     priority: route === '' ? 1 : route.split('/').length === 2 ? 0.8 : 0.6,
