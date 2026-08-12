@@ -19,25 +19,27 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "ToolboxHQ - Free Developer & File Tools",
+    default: "ToolboxHQ - Free Online Tools & Utilities",
     template: "%s | ToolboxHQ",
   },
   description:
-    "Free, privacy-focused browser-based tools for developers and general users. Process files locally in your browser.",
+    "Free online tools for everyday tasks. Edit PDFs, convert images, format code and more — all processed locally in your browser with no sign-up.",
   applicationName: "ToolboxHQ",
   keywords: [
-    "developer tools",
-    "file tools",
+    "online tools",
+    "free tools",
+    "pdf editor",
+    "pdf merge",
+    "pdf split",
+    "image converter",
+    "image compressor",
     "json formatter",
     "json validator",
     "base64 encoder",
     "uuid generator",
     "regex tester",
-    "pdf merger",
-    "pdf splitter",
-    "image converter",
-    "image compressor",
-    "online tools",
+    "adobe acrobat alternative",
+    "utilities",
   ],
   alternates: {
     canonical: "/",
@@ -50,16 +52,16 @@ export const metadata: Metadata = {
     type: "website",
     url: "/",
     siteName: "ToolboxHQ",
-    title: "ToolboxHQ - Free Developer & File Tools",
+    title: "ToolboxHQ - Free Online Tools & Utilities",
     description:
-      "Free, privacy-focused browser-based tools for developers and general users. Process files locally in your browser.",
+      "Free online tools for everyday tasks. Edit PDFs, convert images, format code and more — processed locally in your browser.",
     locale: "en_US",
   },
   twitter: {
     card: "summary",
-    title: "ToolboxHQ - Free Developer & File Tools",
+    title: "ToolboxHQ - Free Online Tools & Utilities",
     description:
-      "Free, privacy-focused browser-based tools for developers and general users. Process files locally in your browser.",
+      "Free online tools for everyday tasks. Edit PDFs, convert images, format code and more — processed locally in your browser.",
   },
 };
 

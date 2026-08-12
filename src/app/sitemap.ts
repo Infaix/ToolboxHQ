@@ -1,24 +1,32 @@
 import { MetadataRoute } from 'next';
-import { tools } from '@/lib/toolRegistry';
+import { tools, toolUrl } from '@/lib/toolRegistry';
 import { SITE_URL } from '@/lib/site';
 
 export const dynamic = 'force-static';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const toolRoutes = tools.map((tool) => `/${tool.category}/${tool.slug}`);
+  const toolRoutes = tools.map((tool) => toolUrl(tool));
 
   const routes = [
     '',
+    '/pdf',
+    '/images',
+    '/documents',
+    '/students',
+    '/utilities',
     '/developer',
     '/files',
     ...toolRoutes,
+    '/pdf-editor/editor',
     '/pricing',
     '/about',
     '/privacy',
     '/contact',
   ];
 
-  return routes.map((route) => ({
+  const unique = [...new Set(routes)];
+
+  return unique.map((route) => ({
     url: `${SITE_URL}${route}`,
     lastModified: new Date(),
     changeFrequency: 'weekly' as const,

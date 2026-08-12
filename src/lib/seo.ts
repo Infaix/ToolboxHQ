@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getToolBySlug } from "@/lib/toolRegistry";
+import { getToolBySlug, toolUrl } from "@/lib/toolRegistry";
 import { SITE_URL } from "@/lib/site";
 
 export const siteUrl = SITE_URL;
@@ -8,7 +8,9 @@ export function buildToolMetadata(slug: string): Metadata {
   const tool = getToolBySlug(slug);
   if (!tool) return {};
 
-  const path = `/${tool.category}/${tool.slug}`;
+  const path = toolUrl(tool);
+  const categoryLabel =
+    tool.category === "files" ? "File" : tool.category === "pdf" ? "PDF" : "Developer";
 
   return {
     title: tool.name,
@@ -20,13 +22,13 @@ export function buildToolMetadata(slug: string): Metadata {
       type: "website",
       url: path,
       siteName: "ToolboxHQ",
-      title: `${tool.name} - Free ${tool.category === "files" ? "File" : "Developer"} Tool`,
+      title: `${tool.name} - Free ${categoryLabel} Tool`,
       description: tool.description,
       locale: "en_US",
     },
     twitter: {
       card: "summary",
-      title: `${tool.name} - Free ${tool.category === "files" ? "File" : "Developer"} Tool`,
+      title: `${tool.name} - Free ${categoryLabel} Tool`,
       description: tool.description,
     },
   };

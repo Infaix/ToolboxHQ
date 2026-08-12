@@ -24,3 +24,35 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans);
 }
+
+/*
+ * PDF editor overlay isolation.
+ * The PDF canvas and its editable overlays live in .pdf-overlay-layer. These
+ * rules give the layer its own neutral typographic baseline so website-wide
+ * font-family / font-size / line-height / color / letter-spacing rules can
+ * never bleed into PDF text. Individual overlays override these values with
+ * the styles extracted from (or chosen for) the document.
+ */
+.pdf-overlay-layer,
+.pdf-overlay-layer * {
+  box-sizing: border-box;
+}
+
+.pdf-overlay-layer {
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  font-style: normal;
+  line-height: 1.3;
+  letter-spacing: 0;
+  word-spacing: 0;
+  text-transform: none;
+  color: #111827;
+  background: transparent;
+  font-synthesis: weight style;
+}
+
+.pdf-overlay-layer [contenteditable] {
+  outline: none;
+  caret-color: #3b82f6;
+}

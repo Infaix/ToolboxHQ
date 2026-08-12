@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { getToolBySlug } from '@/lib/toolRegistry';
+import { getToolBySlug, toolUrl } from '@/lib/toolRegistry';
 
 interface RelatedToolsProps {
   currentSlug: string;
@@ -20,7 +20,7 @@ export default function RelatedTools({ currentSlug }: RelatedToolsProps) {
         {related.map((relatedTool) => (
           <li key={relatedTool.slug}>
             <Link
-              href={`/${relatedTool.category}/${relatedTool.slug}`}
+              href={toolUrl(relatedTool)}
               className="block rounded-md border border-gray-200 p-4 transition-colors hover:border-gray-300 dark:border-gray-600 dark:hover:border-gray-500"
             >
               <span className="block font-medium text-gray-900 dark:text-white">{relatedTool.name}</span>
