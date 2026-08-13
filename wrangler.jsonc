@@ -1,9 +1,6 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "toolbox",
-  "main": "./worker/index.ts",
   "compatibility_date": "2026-08-13",
-  "assets": {
-    "directory": "./out"
-  }
+  "pages_build_output_dir": "./out"
 }
