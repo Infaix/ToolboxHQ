@@ -2,6 +2,7 @@
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "toolboxhq",
   "compatibility_date": "2026-08-12",
+  "main": "./src/worker.ts",
   "assets": {
     "directory": "./out"
   }
