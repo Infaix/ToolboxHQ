@@ -9,7 +9,7 @@
     "dev": "next dev",
     "build": "next build",
     "preview": "wrangler pages dev",
-    "deploy": "next build && wrangler pages deploy",
+    "deploy": "next build",
     "lint": "eslint"
   },
   "dependencies": {
