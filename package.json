@@ -9,7 +9,7 @@
     "dev": "next dev",
     "build": "next build",
     "preview": "wrangler pages dev",
-    "deploy": "next build",
+    "deploy": "next build && npx wrangler pages deploy ./out --project-name toolboxhq",
     "lint": "eslint"
   },
   "dependencies": {
