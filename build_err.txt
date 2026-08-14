@@ -1,0 +1,4 @@
+npm notice run toolboxhq@0.1.0 npx
+npm notice run next build
+Failed to type check.
+

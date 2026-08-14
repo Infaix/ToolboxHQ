@@ -1,0 +1,200 @@
+▲ Next.js 16.3.0 (Turbopack)
+✓ Running next.config.ts took 23ms
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 1337ms
+  Running TypeScript ...
+.next/types/validator.ts(385,31): error TS2344: Type 'typeof import("C:/Workspace/Projects/ToolboxHQ/src/app/students/scientific-calculator/page")' does not satisfy the constraint 'AppPageConfig<"/students/scientific-calculator">'.
+  Types of property 'default' are incompatible.
+    Type '() => { display: string; setDisplay: Dispatch<SetStateAction<string>>; history: string[]; memory: Dispatch<SetStateAction<number>>; ... 8 more ...; keys: string[][]; }' is not assignable to type 'ComponentType<any> | ((props: any) => void | Promise<void> | ReactNode | Promise<ReactNode>)'.
+      Type '() => { display: string; setDisplay: Dispatch<SetStateAction<string>>; history: string[]; memory: Dispatch<SetStateAction<number>>; ... 8 more ...; keys: string[][]; }' is not assignable to type 'FunctionComponent<any>'.
+        Type '{ display: string; setDisplay: Dispatch<SetStateAction<string>>; history: string[]; memory: Dispatch<SetStateAction<number>>; ... 8 more ...; keys: string[][]; }' is not assignable to type 'ReactNode | Promise<ReactNode>'.
+src/app/students/atar-calculator/page.tsx(31,22): error TS2304: Cannot find name 'useCallback'.
+src/app/students/atar-calculator/page.tsx(35,24): error TS2304: Cannot find name 'useCallback'.
+src/app/students/atar-calculator/page.tsx(41,22): error TS2304: Cannot find name 'useCallback'.
+src/app/students/atar-calculator/page.tsx(50,25): error TS2304: Cannot find name 'useCallback'.
+src/app/students/atar-calculator/page.tsx(54,28): error TS2304: Cannot find name 'useCallback'.
+src/app/students/atar-calculator/page.tsx(60,29): error TS2304: Cannot find name 'useCallback'.
+src/app/students/atar-calculator/page.tsx(66,23): error TS2304: Cannot find name 'useCallback'.
+src/app/students/atar-calculator/page.tsx(118,12): error TS2304: Cannot find name 'Link'.
+src/app/students/atar-calculator/page.tsx(134,13): error TS2304: Cannot find name 'Link'.
+src/app/students/atar-calculator/page.tsx(165,32): error TS2304: Cannot find name 'input'.
+src/app/students/atar-calculator/page.tsx(184,32): error TS2304: Cannot find name 'input'.
+src/app/students/atar-calculator/page.tsx(206,26): error TS2304: Cannot find name 'button'.
+src/app/students/atar-goal-calculator/page.tsx(39,22): error TS2304: Cannot find name 'useCallback'.
+src/app/students/atar-goal-calculator/page.tsx(43,24): error TS2304: Cannot find name 'useCallback'.
+src/app/students/atar-goal-calculator/page.tsx(49,30): error TS2304: Cannot find name 'useCallback'.
+src/app/students/atar-goal-calculator/page.tsx(62,22): error TS2304: Cannot find name 'useCallback'.
+src/app/students/atar-goal-calculator/page.tsx(71,25): error TS2304: Cannot find name 'useCallback'.
+src/app/students/atar-goal-calculator/page.tsx(75,28): error TS2304: Cannot find name 'useCallback'.
+src/app/students/atar-goal-calculator/page.tsx(81,29): error TS2304: Cannot find name 'useCallback'.
+src/app/students/atar-goal-calculator/page.tsx(87,23): error TS2304: Cannot find name 'useCallback'.
+src/app/students/atar-goal-calculator/page.tsx(143,12): error TS2304: Cannot find name 'Link'.
+src/app/students/atar-goal-calculator/page.tsx(159,13): error TS2304: Cannot find name 'Link'.
+src/app/students/atar-goal-calculator/page.tsx(182,28): error TS2304: Cannot find name 'numberInput'.
+src/app/students/atar-goal-calculator/page.tsx(213,32): error TS2304: Cannot find name 'input'.
+src/app/students/atar-goal-calculator/page.tsx(232,32): error TS2304: Cannot find name 'input'.
+src/app/students/atar-goal-calculator/page.tsx(254,26): error TS2304: Cannot find name 'button'.
+src/app/students/exam-countdown/page.tsx(32,23): error TS2304: Cannot find name 'useCallback'.
+src/app/students/exam-countdown/page.tsx(38,27): error TS2304: Cannot find name 'useCallback'.
+src/app/students/exam-countdown/page.tsx(58,19): error TS2304: Cannot find name 'useCallback'.
+src/app/students/exam-countdown/page.tsx(62,22): error TS2304: Cannot find name 'useCallback'.
+src/app/students/exam-countdown/page.tsx(106,12): error TS2304: Cannot find name 'Link'.
+src/app/students/exam-countdown/page.tsx(122,13): error TS2304: Cannot find name 'Link'.
+src/app/students/exam-countdown/page.tsx(139,28): error TS2304: Cannot find name 'input'.
+src/app/students/exam-countdown/page.tsx(147,34): error TS2304: Cannot find name 'input'.
+src/app/students/exam-countdown/page.tsx(162,28): error TS2304: Cannot find name 'input'.
+src/app/students/exam-countdown/page.tsx(184,35): error TS7006: Parameter 'exam' implicitly has an 'any' type.
+src/app/students/flashcards/page.tsx(46,19): error TS2304: Cannot find name 'useCallback'.
+src/app/students/flashcards/page.tsx(56,22): error TS2304: Cannot find name 'useCallback'.
+src/app/students/flashcards/page.tsx(61,22): error TS2304: Cannot find name 'useCallback'.
+src/app/students/flashcards/page.tsx(65,19): error TS2304: Cannot find name 'useCallback'.
+src/app/students/flashcards/page.tsx(83,22): error TS2304: Cannot find name 'useCallback'.
+src/app/students/flashcards/page.tsx(91,23): error TS2304: Cannot find name 'useCallback'.
+src/app/students/flashcards/page.tsx(107,20): error TS2304: Cannot find name 'useCallback'.
+src/app/students/flashcards/page.tsx(115,20): error TS2304: Cannot find name 'useCallback'.
+src/app/students/flashcards/page.tsx(157,22): error TS18047: 'displayCard' is possibly 'null'.
+src/app/students/flashcards/page.tsx(172,22): error TS18047: 'displayCard' is possibly 'null'.
+src/app/students/flashcards/page.tsx(178,22): error TS18047: 'displayCard' is possibly 'null'.
+src/app/students/flashcards/page.tsx(260,21): error TS2339: Property 'icon' does not exist on type 'FlashcardDeck'.
+src/app/students/focus-dashboard/page.tsx(71,51): error TS7006: Parameter 's' implicitly has an 'any' type.
+src/app/students/focus-dashboard/page.tsx(91,12): error TS2304: Cannot find name 'Link'.
+src/app/students/focus-dashboard/page.tsx(107,13): error TS2304: Cannot find name 'Link'.
+src/app/students/gpa-calculator/page.tsx(32,23): error TS2304: Cannot find name 'useCallback'.
+src/app/students/gpa-calculator/page.tsx(36,24): error TS2304: Cannot find name 'useCallback'.
+src/app/students/gpa-calculator/page.tsx(40,15): error TS2304: Cannot find name 'useCallback'.
+src/app/students/gpa-calculator/page.tsx(45,22): error TS2304: Cannot find name 'useCallback'.
+src/app/students/gpa-calculator/page.tsx(55,25): error TS2304: Cannot find name 'useCallback'.
+src/app/students/gpa-calculator/page.tsx(59,28): error TS2304: Cannot find name 'useCallback'.
+src/app/students/gpa-calculator/page.tsx(65,29): error TS2304: Cannot find name 'useCallback'.
+src/app/students/gpa-calculator/page.tsx(71,31): error TS2304: Cannot find name 'useCallback'.
+src/app/students/gpa-calculator/page.tsx(127,12): error TS2304: Cannot find name 'Link'.
+src/app/students/gpa-calculator/page.tsx(143,13): error TS2304: Cannot find name 'Link'.
+src/app/students/gpa-calculator/page.tsx(179,32): error TS2304: Cannot find name 'input'.
+src/app/students/gpa-calculator/page.tsx(194,32): error TS2304: Cannot find name 'input'.
+src/app/students/gpa-calculator/page.tsx(208,32): error TS2304: Cannot find name 'input'.
+src/app/students/gpa-calculator/page.tsx(229,26): error TS2304: Cannot find name 'button'.
+src/app/students/grade-calculator/page.tsx(106,11): error TS2339: Property 'theme' does not exist on type 'unknown'.
+src/app/students/grade-calculator/page.tsx(106,32): error TS2304: Cannot find name 'ThemeContext'.
+src/app/students/grade-calculator/page.tsx(127,12): error TS2304: Cannot find name 'Link'.
+src/app/students/grade-calculator/page.tsx(143,13): error TS2304: Cannot find name 'Link'.
+src/app/students/maths-formulas/page.tsx(151,27): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{ algebra: { name: string; formula: string; description: string; variables: { name: string; meaning: string; }[]; }[]; functions: { name: string; formula: string; description: string; variables: { name: string; meaning: string; }[]; }[]; trigonometry: { ...; }[]; calculus: { ...; }[]; statistics: { ...; }[]; }'.
+  No index signature with a parameter of type 'string' was found on type '{ algebra: { name: string; formula: string; description: string; variables: { name: string; meaning: string; }[]; }[]; functions: { name: string; formula: string; description: string; variables: { name: string; meaning: string; }[]; }[]; trigonometry: { ...; }[]; calculus: { ...; }[]; statistics: { ...; }[]; }'.
+src/app/students/maths-formulas/page.tsx(177,12): error TS2304: Cannot find name 'Link'.
+src/app/students/maths-formulas/page.tsx(193,13): error TS2304: Cannot find name 'Link'.
+src/app/students/maths-formulas/page.tsx(240,33): error TS7006: Parameter 'formula' implicitly has an 'any' type.
+src/app/students/maths-formulas/page.tsx(246,25): error TS7006: Parameter 'v' implicitly has an 'any' type.
+src/app/students/notes/page.tsx(32,19): error TS2304: Cannot find name 'useCallback'.
+src/app/students/notes/page.tsx(41,22): error TS2304: Cannot find name 'useCallback'.
+src/app/students/notes/page.tsx(45,20): error TS2304: Cannot find name 'useCallback'.
+src/app/students/notes/page.tsx(90,12): error TS2304: Cannot find name 'Link'.
+src/app/students/notes/page.tsx(106,13): error TS2304: Cannot find name 'Link'.
+src/app/students/notes/page.tsx(124,28): error TS2304: Cannot find name 'input'.
+src/app/students/notes/page.tsx(132,34): error TS2304: Cannot find name 'input'.
+src/app/students/page.tsx(3,8): error TS1192: Module '"C:/Workspace/Projects/ToolboxHQ/src/contexts/ThemeContext"' has no default export.
+src/app/students/page.tsx(12,11): error TS2339: Property 'theme' does not exist on type 'unknown'.
+src/app/students/physics-calculator/page.tsx(47,42): error TS2353: Object literal may only specify known properties, and 'defaultValue' does not exist in type '{ name: string; unit: string; }'.
+src/app/students/physics-calculator/page.tsx(75,42): error TS2353: Object literal may only specify known properties, and 'defaultValue' does not exist in type '{ name: string; unit: string; }'.
+src/app/students/physics-calculator/page.tsx(129,31): error TS2339: Property 'defaultValue' does not exist on type '{ name: string; unit: string; }'.
+src/app/students/physics-calculator/page.tsx(129,66): error TS2339: Property 'defaultValue' does not exist on type '{ name: string; unit: string; }'.
+src/app/students/physics-calculator/page.tsx(134,21): error TS2304: Cannot find name 'useCallback'.
+src/app/students/physics-calculator/page.tsx(150,7): error TS2304: Cannot find name 'setDisplay'.
+src/app/students/physics-calculator/page.tsx(150,20): error TS2304: Cannot find name 'setDisplay'.
+src/app/students/physics-calculator/page.tsx(152,7): error TS2304: Cannot find name 'setDisplay'.
+src/app/students/physics-calculator/page.tsx(156,29): error TS2304: Cannot find name 'useCallback'.
+src/app/students/physics-calculator/page.tsx(163,5): error TS18004: No value exists in scope for the shorthand property 'setCalculation'. Either declare one or provide an initializer.
+src/app/students/physics-calculator/page.tsx(190,12): error TS2304: Cannot find name 'Link'.
+src/app/students/physics-calculator/page.tsx(206,13): error TS2304: Cannot find name 'Link'.
+src/app/students/physics-calculator/page.tsx(242,21): error TS2322: Type '{ name: string; unit: string; }' is not assignable to type 'string'.
+src/app/students/physics-calculator/page.tsx(257,14): error TS2304: Cannot find name 'display'.
+src/app/students/physics-calculator/page.tsx(257,39): error TS2304: Cannot find name 'display'.
+src/app/students/physics-calculator/page.tsx(259,26): error TS2304: Cannot find name 'display'.
+src/app/students/physics-formulas/page.tsx(148,27): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{ mechanics: { name: string; formula: string; description: string; variables: ({ name: string; meaning: string; unit: string; defaultValue?: undefined; } | { name: string; meaning: string; unit: string; defaultValue: number; })[]; }[]; energy: { ...; }[]; waves: { ...; }[]; }'.
+  No index signature with a parameter of type 'string' was found on type '{ mechanics: { name: string; formula: string; description: string; variables: ({ name: string; meaning: string; unit: string; defaultValue?: undefined; } | { name: string; meaning: string; unit: string; defaultValue: number; })[]; }[]; energy: { ...; }[]; waves: { ...; }[]; }'.
+src/app/students/physics-formulas/page.tsx(174,12): error TS2304: Cannot find name 'Link'.
+src/app/students/physics-formulas/page.tsx(190,13): error TS2304: Cannot find name 'Link'.
+src/app/students/physics-formulas/page.tsx(223,33): error TS7006: Parameter 'formula' implicitly has an 'any' type.
+src/app/students/physics-formulas/page.tsx(229,25): error TS7006: Parameter 'v' implicitly has an 'any' type.
+src/app/students/question-generator/page.tsx(81,28): error TS2304: Cannot find name 'useCallback'.
+src/app/students/question-generator/page.tsx(121,12): error TS2304: Cannot find name 'Link'.
+src/app/students/question-generator/page.tsx(137,13): error TS2304: Cannot find name 'Link'.
+src/app/students/question-generator/page.tsx(155,28): error TS2304: Cannot find name 'input'.
+src/app/students/question-generator/page.tsx(170,34): error TS2304: Cannot find name 'setDifficulty'.
+src/app/students/question-generator/page.tsx(171,28): error TS2304: Cannot find name 'input'.
+src/app/students/question-generator/page.tsx(215,17): error TS2304: Cannot find name 'setQuestion'.
+src/app/students/question-generator/page.tsx(216,17): error TS2304: Cannot find name 'setAnswer'.
+src/app/students/question-generator/page.tsx(217,17): error TS2304: Cannot find name 'setExplanation'.
+src/app/students/quiz-maker/page.tsx(50,28): error TS2304: Cannot find name 'useCallback'.
+src/app/students/quiz-maker/page.tsx(55,23): error TS2304: Cannot find name 'useCallback'.
+src/app/students/quiz-maker/page.tsx(73,24): error TS2304: Cannot find name 'useCallback'.
+src/app/students/quiz-maker/page.tsx(91,22): error TS2304: Cannot find name 'useCallback'.
+src/app/students/quiz-maker/page.tsx(98,26): error TS2304: Cannot find name 'useCallback'.
+src/app/students/quiz-maker/page.tsx(102,23): error TS2304: Cannot find name 'useCallback'.
+src/app/students/quiz-maker/page.tsx(106,21): error TS2304: Cannot find name 'useCallback'.
+src/app/students/quiz-maker/page.tsx(115,26): error TS2304: Cannot find name 'useCallback'.
+src/app/students/quiz-maker/page.tsx(119,21): error TS2304: Cannot find name 'useCallback'.
+src/app/students/quiz-maker/page.tsx(123,24): error TS2304: Cannot find name 'useCallback'.
+src/app/students/quiz-maker/page.tsx(171,12): error TS2304: Cannot find name 'Link'.
+src/app/students/quiz-maker/page.tsx(187,13): error TS2304: Cannot find name 'Link'.
+src/app/students/quiz-maker/page.tsx(210,10): error TS2365: Operator '>' cannot be applied to types 'boolean' and 'number'.
+src/app/students/quiz-maker/page.tsx(218,14): error TS2322: Type '{ children: Element; className: string; role: "progressbar"; "aria-valuemin": string; "aria-valuemax": number; "aria-valuenow": number; }' is not assignable to type 'DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement>'.
+  Type '{ children: Element; className: string; role: "progressbar"; "aria-valuemin": string; "aria-valuemax": number; "aria-valuenow": number; }' is not assignable to type 'HTMLAttributes<HTMLDivElement>'.
+    Types of property '"aria-valuemin"' are incompatible.
+      Type 'string' is not assignable to type 'number'.
+src/app/students/scientific-calculator/page.tsx(11,31): error TS1517: Range out of order in character class.
+src/app/students/scientific-calculator/page.tsx(45,5): error TS2304: Cannot find name 'setMemory'.
+src/app/students/scientific-calculator/page.tsx(45,15): error TS7006: Parameter 'prev' implicitly has an 'any' type.
+src/app/students/scientific-calculator/page.tsx(52,41): error TS2304: Cannot find name 'setMemory'.
+src/app/students/study-planner/page.tsx(55,25): error TS2304: Cannot find name 'useCallback'.
+src/app/students/study-planner/page.tsx(62,26): error TS2304: Cannot find name 'useCallback'.
+src/app/students/study-planner/page.tsx(66,19): error TS2304: Cannot find name 'useCallback'.
+src/app/students/study-planner/page.tsx(77,22): error TS2304: Cannot find name 'useCallback'.
+src/app/students/study-planner/page.tsx(83,22): error TS2304: Cannot find name 'useCallback'.
+src/app/students/study-planner/page.tsx(141,12): error TS2304: Cannot find name 'Link'.
+src/app/students/study-planner/page.tsx(157,13): error TS2304: Cannot find name 'Link'.
+src/app/students/study-planner/page.tsx(175,28): error TS2304: Cannot find name 'input'.
+src/app/students/study-planner/page.tsx(183,34): error TS2304: Cannot find name 'input'.
+src/app/students/study-planner/page.tsx(199,34): error TS2304: Cannot find name 'input'.
+src/app/students/study-planner/page.tsx(211,28): error TS2304: Cannot find name 'input'.
+src/app/students/study-planner/page.tsx(235,49): error TS7006: Parameter 'task' implicitly has an 'any' type.
+src/app/students/study-planner/page.tsx(237,36): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{ low: string; medium: string; high: string; }'.
+src/app/students/study-planner/page.tsx(260,50): error TS7006: Parameter 'task' implicitly has an 'any' type.
+src/app/students/study-score-calculator/page.tsx(32,30): error TS2304: Cannot find name 'useCallback'.
+src/app/students/study-score-calculator/page.tsx(36,23): error TS2304: Cannot find name 'useCallback'.
+src/app/students/study-score-calculator/page.tsx(40,31): error TS2304: Cannot find name 'useCallback'.
+src/app/students/study-score-calculator/page.tsx(45,22): error TS2304: Cannot find name 'useCallback'.
+src/app/students/study-score-calculator/page.tsx(55,25): error TS2304: Cannot find name 'useCallback'.
+src/app/students/study-score-calculator/page.tsx(59,28): error TS2304: Cannot find name 'useCallback'.
+src/app/students/study-score-calculator/page.tsx(65,29): error TS2304: Cannot find name 'useCallback'.
+src/app/students/study-score-calculator/page.tsx(71,30): error TS2304: Cannot find name 'useCallback'.
+src/app/students/study-score-calculator/page.tsx(124,12): error TS2304: Cannot find name 'Link'.
+src/app/students/study-score-calculator/page.tsx(140,13): error TS2304: Cannot find name 'Link'.
+src/app/students/study-score-calculator/page.tsx(168,32): error TS2304: Cannot find name 'input'.
+src/app/students/study-score-calculator/page.tsx(184,32): error TS2304: Cannot find name 'input'.
+src/app/students/study-score-calculator/page.tsx(203,32): error TS2304: Cannot find name 'input'.
+src/app/students/study-score-calculator/page.tsx(224,26): error TS2304: Cannot find name 'button'.
+src/app/students/study-timer/page.tsx(155,32): error TS2304: Cannot find name 'setWorkDuration'.
+src/app/students/study-timer/page.tsx(168,32): error TS2304: Cannot find name 'setBreakDuration'.
+src/app/students/unit-converter/page.tsx(56,5): error TS2322: Type 'string' is not assignable to type 'number'.
+src/app/students/unit-converter/page.tsx(57,5): error TS2322: Type 'string' is not assignable to type 'number'.
+src/app/students/unit-converter/page.tsx(58,5): error TS2322: Type 'string' is not assignable to type 'number'.
+src/app/students/unit-converter/page.tsx(91,31): error TS2304: Cannot find name 'useCallback'.
+src/app/students/unit-converter/page.tsx(98,50): error TS2345: Argument of type 'number' is not assignable to parameter of type 'string'.
+src/app/students/unit-converter/page.tsx(99,57): error TS2345: Argument of type 'number' is not assignable to parameter of type 'string'.
+src/app/students/unit-converter/page.tsx(100,56): error TS2345: Argument of type 'number' is not assignable to parameter of type 'string'.
+src/app/students/unit-converter/page.tsx(108,38): error TS2345: Argument of type 'number' is not assignable to parameter of type 'string'.
+src/app/students/unit-converter/page.tsx(207,34): error TS2304: Cannot find name 'setFromUnit'.
+src/app/students/unit-converter/page.tsx(227,34): error TS2304: Cannot find name 'setToUnit'.
+src/app/students/unit-converter/page.tsx(250,41): error TS2345: Argument of type 'string' is not assignable to parameter of type 'SetStateAction<number>'.
+src/app/students/weighted-average/page.tsx(31,23): error TS2304: Cannot find name 'useCallback'.
+src/app/students/weighted-average/page.tsx(35,23): error TS2304: Cannot find name 'useCallback'.
+src/app/students/weighted-average/page.tsx(39,19): error TS2304: Cannot find name 'useCallback'.
+src/app/students/weighted-average/page.tsx(44,20): error TS2304: Cannot find name 'useCallback'.
+src/app/students/weighted-average/page.tsx(53,23): error TS2304: Cannot find name 'useCallback'.
+src/app/students/weighted-average/page.tsx(57,29): error TS2304: Cannot find name 'useCallback'.
+src/app/students/weighted-average/page.tsx(63,30): error TS2304: Cannot find name 'useCallback'.
+src/app/students/weighted-average/page.tsx(117,12): error TS2304: Cannot find name 'Link'.
+src/app/students/weighted-average/page.tsx(133,13): error TS2304: Cannot find name 'Link'.
+src/app/students/weighted-average/page.tsx(161,32): error TS2304: Cannot find name 'input'.
+src/app/students/weighted-average/page.tsx(175,32): error TS2304: Cannot find name 'input'.
+src/app/students/weighted-average/page.tsx(195,26): error TS2304: Cannot find name 'button'.

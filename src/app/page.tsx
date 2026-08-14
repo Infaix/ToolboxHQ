@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import ToolSearch from '@/components/tools/ToolSearch';
-import { getToolBySlug, getToolsByGroup, toolUrl } from '@/lib/toolRegistry';
+import { getToolBySlug, getToolsByCategory, getToolsByGroup, toolUrl } from '@/lib/toolRegistry';
 import type { Tool } from '@/lib/toolRegistry';
 
 const FEATURED_SLUGS = [

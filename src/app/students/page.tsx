@@ -5,14 +5,14 @@ import { getToolsByGroup, toolUrl } from '@/lib/toolRegistry';
 
 export const metadata: Metadata = {
   title: 'Student Tools - ToolboxHQ',
-  description: 'Free student tools for VCE, ATAR, GPA, calculators, planners, flashcards, and study productivity. All client-side in your browser.',
+  description: 'Free student tools for VCE, ATAR, GPA, calculators, planners, flashcards, and productivity. All client-side, private, and instantly accessible.',
 };
 
 export default function StudentToolsPage() {
   const { theme } = useContext(ThemeContext);
   const isDark = theme === 'dark';
 
-  // Define all 15 student tools with categorization
+  // Define all student tools with categorization
   const allTools = [
     // Academic Results
     {
@@ -31,10 +31,17 @@ export default function StudentToolsPage() {
       icon: '🎓',
     },
     {
+      name: 'ATAR Goal Calculator',
+      path: '/students/atar-goal-calculator',
+      category: 'Academic Results',
+      description: 'Determine what study scores you need to achieve your target ATAR',
+      icon: '🎯',
+    },
+    {
       name: 'Grade Calculator',
       path: '/students/grade-calculator',
       category: 'Academic Results',
-      description: 'Calculate percentages from marks and weights',
+      description: 'Calculate weighted overall percentage from assessments',
       icon: '📝',
     },
     {
@@ -44,6 +51,14 @@ export default function StudentToolsPage() {
       description: 'Calculate weighted GPA on 4.0 scale',
       icon: '📈',
     },
+    {
+      name: 'Weighted Average Calculator',
+      path: '/students/weighted-average',
+      category: 'Academic Results',
+      description: 'Calculate weighted averages from multiple values and weights',
+      icon: '⚖️',
+    },
+
     // Study & Productivity
     {
       name: 'Study Planner',
@@ -56,21 +71,21 @@ export default function StudentToolsPage() {
       name: 'Flashcards',
       path: '/students/flashcards',
       category: 'Study & Productivity',
-      description: 'Create and study flashcard decks locally',
+      description: 'Study with digital flashcards stored in browser localStorage',
       icon: '🃏',
     },
     {
-      name: 'Pomodoro Timer',
-      path: '/students/pomodoro',
+      name: 'Study Timer',
+      path: '/students/study-timer',
       category: 'Study & Productivity',
-      description: '25/5 study-break timer with custom durations',
+      description: 'Pomodoro timer with custom durations',
       icon: '⏱️',
     },
     {
       name: 'Exam Countdown',
       path: '/students/exam-countdown',
       category: 'Study & Productivity',
-      description: 'Countdown to exams with localStorage persistence',
+      description: 'Countdown timer to your exams with localStorage persistence',
       icon: '📢',
     },
     {
@@ -82,11 +97,12 @@ export default function StudentToolsPage() {
     },
     {
       name: 'Focus Dashboard',
-      path: '/students/dashboard',
+      path: '/students/focus-dashboard',
       category: 'Study & Productivity',
       description: 'Productivity dashboard with tasks, timer, and exams',
       icon: '📊',
     },
+
     // Maths & Science
     {
       name: 'Scientific Calculator',
@@ -130,12 +146,11 @@ export default function StudentToolsPage() {
       description: 'Generate random practice prompts by subject',
       icon: '❓',
     },
-    // Additional Tools
     {
       name: 'Quiz Maker',
       path: '/students/quiz-maker',
       category: 'Additional',
-      description: 'Create and practice quizzes with localStorage',
+      description: 'Create and practice quizzes with localStorage persistence',
       icon: '📝',
     },
   ];
@@ -170,17 +185,17 @@ export default function StudentToolsPage() {
               <path d="M12 5v14M5 12h14" />
             </svg>
           </div>
-        </header>
+</header>
 
-        {/* Prominent Tools Section - ATAR Calculator leads off */}
-        <section className="mb-12">
+      {/* Prominent Tools Section - ATAR Calculator leads off */}
+        <section className="mb-8">
           <h2 className="text-xl font-medium text-gray-900 dark:text-white mb-4">Your ATAR & Study Tools</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {prominentTools.map((tool) => (
               <a
                 key={tool.path}
                 href={tool.path}
-                className="group rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-all hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md dark:border-gray-700 dark:bg-gray-800 dark:hover:border-blue-600 cursor-pointer"
+                className="group rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-all hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md dark:border-gray-700 dark:bg-gray-800 dark:hover:border-blue-400 cursor-pointer"
               >
                 <div className="h-14 w-14 rounded-xl flex items-center justify-center mb-4 text-3xl opacity-90 group-hover:text-blue-600 dark:group-hover:text-blue-400">
                   {tool.icon}
@@ -202,17 +217,17 @@ export default function StudentToolsPage() {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {otherTools.map((tool) => (
               <a
-                key={tool.path}
+                key={tool.name}
                 href={tool.path}
                 className="group rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md dark:border-gray-700 dark:bg-gray-800 dark:hover:border-blue-400 cursor-pointer"
               >
                 <div className="h-10 w-10 rounded-xl flex items-center justify-center mb-3 text-2xl opacity-90 group-hover:text-blue-600 dark:group-hover:text-blue-400">
                   {tool.icon}
                 </div>
-                <h3 className="text-base font-medium text-gray-900 dark:text-white group-hover:text-blue-600 transition-colors">
+                <h3 className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-blue-600 transition-colors">
                   {tool.name}
                 </h3>
-                <p className="mt-1 text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+                <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">
                   {tool.description}
                 </p>
               </a>
@@ -220,9 +235,9 @@ export default function StudentToolsPage() {
           </div>
         </section>
 
-        {/* Footer note */}
-        <footer className="mt-12 pt-12 border-t border-gray-200 dark:border-gray-700 text-center text-sm text-gray-500 dark:text-gray-400">
-          <p>All tools run entirely in your browser. Your data stays private and is never sent to a server.</p>
+        {/* Privacy notice */}
+        <footer className="mt-10 pt-8 border-t border-gray-200 dark:border-gray-700 text-center text-sm text-gray-500 dark:text-gray-400">
+          <p>Your student data stays on your device. These tools run entirely in your browser and do not require an account or server.</p>
           <p className="mt-2">
             <a href="/"
               className="transition-colors hover:text-gray-700 dark:hover:text-gray-200"

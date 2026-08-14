@@ -354,3 +354,24 @@ export function toolUrl(tool: Tool): string {
 export function getToolsByGroup(group: ToolGroup): Tool[] {
   return tools.filter((tool) => tool.group === group);
 }
+
+/** Get a tool by its slug. */
+export function getToolBySlug(slug: string): Tool | undefined {
+  return tools.find((tool) => tool.slug === slug);
+}
+
+/** Get tools by category. */
+export function getToolsByCategory(category: ToolCategory): Tool[] {
+  return tools.filter((tool) => tool.category === category);
+}
+
+/** Search tools by query string (matches name, description, and keywords). */
+export function searchTools(query: string): Tool[] {
+  const lowerQuery = query.toLowerCase().trim();
+  return tools.filter(
+    (tool) =>
+      tool.name.toLowerCase().includes(lowerQuery) ||
+      tool.description.toLowerCase().includes(lowerQuery) ||
+      tool.keywords.some((keyword) => keyword.toLowerCase().includes(lowerQuery))
+  );
+}
