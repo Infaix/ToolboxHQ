@@ -14,6 +14,7 @@ interface SubjectEntry {
 export function useAtarCalculator() {
   const { theme } = useTheme();
   const [subjects, setSubjects] = useState<SubjectEntry[]>(() => {
+    if (typeof window === 'undefined') return [];
     const stored = localStorage.getItem('atar-calculator-subjects');
     if (stored) {
       try {

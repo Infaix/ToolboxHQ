@@ -145,7 +145,7 @@ const physicsFormulas = {
 };
 
 export function usePhysicsFormulas() {
-  const [selectedCategory, setSelectedCategory] = useState('mechanics');
+  const [selectedCategory, setSelectedCategory] = useState<keyof typeof physicsFormulas>('mechanics');
   const visibleFormulas = physicsFormulas[selectedCategory] || physicsFormulas.mechanics;
 
   return {

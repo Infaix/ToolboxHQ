@@ -1,7 +1,4 @@
 import type { Metadata } from 'next';
-import { useContext } from 'react';
-import { useTheme } from '@/contexts/ThemeContext';
-import { getToolsByGroup, toolUrl } from '@/lib/toolRegistry';
 
 export const metadata: Metadata = {
   title: 'Student Tools - ToolboxHQ',
@@ -9,9 +6,6 @@ export const metadata: Metadata = {
 };
 
 export default function StudentToolsPage() {
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
-
   // Define all student tools with categorization
   const allTools = [
     // Academic Results

@@ -20,6 +20,7 @@ interface AtarGoalSubject {
 export function useAtarGoalCalculator() {
   const { theme } = useTheme();
   const [subjects, setSubjects] = useState<AtarGoalSubject[]>(() => {
+    if (typeof window === 'undefined') return [];
     const stored = localStorage.getItem('atar-goal-calculator-subjects');
     if (stored) {
       try {

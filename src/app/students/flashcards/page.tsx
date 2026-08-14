@@ -8,6 +8,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 interface FlashcardDeck {
   id: string;
   name: string;
+  icon?: string;
   cards: Flashcard[];
 }
 
@@ -21,6 +22,7 @@ interface Flashcard {
 export function useFlashcards() {
   const { theme } = useTheme();
   const [decks, setDecks] = useState<FlashcardDeck[]>(() => {
+    if (typeof window === 'undefined') return [];
     const stored = localStorage.getItem('flashcards-decks');
     if (stored) {
       try {
@@ -36,7 +38,7 @@ export function useFlashcards() {
     localStorage.setItem('flashcards-decks', JSON.stringify(decks));
   }, [decks]);
 
-  const currentDeckId = localStorage.getItem('current-flashcard-deck');
+  const currentDeckId = typeof window === 'undefined' ? null : localStorage.getItem('current-flashcard-deck');
 
   const currentDeck = decks.find((d) => d.id === currentDeckId);
 
@@ -48,6 +50,7 @@ export function useFlashcards() {
     const newDeck: FlashcardDeck = {
       id: Date.now().toString(),
       name: 'New Deck',
+      icon: '🃏',
       cards: [],
     };
     setDecks(prev => [...prev, newDeck]);
@@ -146,7 +149,7 @@ export default function FlashcardsPage() {
   let deckGrid = null;
   let noDecksMsg = null;
 
-  if (hasDeck) {
+  if (currentDeck && displayCard) {
     mainContent = (
       <div className="mb-8">
         <div className="rounded-xl border bg-white p-6">

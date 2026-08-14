@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useContext } from 'react';
 import Link from 'next/link';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -12,15 +12,20 @@ export function useStudyTimer() {
   const [breakDuration, setBreakDuration] = useState(5 * 60); // 5 minutes in seconds
   const [remainingTime, setRemainingTime] = useState(workDuration);
   const [sessionCount, setSessionCount] = useState(0);
-  let timerId: NodeJS.Timeout | null = null;
+  const timerIdRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (isRunning && remainingTime > 0) {
-      timerId = setInterval(() => {
+      timerIdRef.current = setInterval(() => {
         setRemainingTime((prev) => prev - 1);
       }, 1000);
+      return () => {
+        if (timerIdRef.current) clearInterval(timerIdRef.current);
+        timerIdRef.current = null;
+      };
     } else if (remainingTime === 0 && isRunning) {
-      clearInterval(timerId!);
+      if (timerIdRef.current) clearInterval(timerIdRef.current);
+      timerIdRef.current = null;
       setIsRunning(false);
       setSessionCount(prev => prev + 1);
       // Optional: browser notification
@@ -31,12 +36,6 @@ export function useStudyTimer() {
       }
     }
   }, [isRunning, remainingTime]);
-
-  useEffect(() => {
-    return () => {
-      if (timerId) clearInterval(timerId);
-    };
-  }, []);
 
   const toggleRun = useCallback(() => {
     setIsRunning(!isRunning);
@@ -56,7 +55,9 @@ export function useStudyTimer() {
   return {
     isRunning,
     workDuration,
+    setWorkDuration,
     breakDuration,
+    setBreakDuration,
     remainingTime,
     sessionCount,
     formatTime,
@@ -69,7 +70,9 @@ export default function StudyTimerPage() {
   const {
     isRunning,
     workDuration,
+    setWorkDuration,
     breakDuration,
+    setBreakDuration,
     remainingTime,
     sessionCount,
     formatTime,

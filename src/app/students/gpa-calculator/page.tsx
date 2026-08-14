@@ -15,6 +15,7 @@ interface GPASubject {
 export function useGPACalculator() {
   const { theme } = useTheme();
   const [subjects, setSubjects] = useState<GPASubject[]>(() => {
+    if (typeof window === 'undefined') return [];
     const stored = localStorage.getItem('gpa-calculator-subjects');
     if (stored) {
       try {
@@ -177,7 +178,7 @@ export default function GPACalculatorPage() {
                     value={subject.name}
                     onChange={(e) => handleNameChange(subject.id, e.target.value)}
                     defaultValue={subject.name}
-                    className={input}
+                    className={classes.input}
                     aria-label="Subject name"
                   />
                 </div>
@@ -192,7 +193,7 @@ export default function GPACalculatorPage() {
                     min={0}
                     max={4}
                     step={0.1}
-                    className={input}
+                    className={classes.input}
                     aria-label="Grade points"
                   />
                 </div>
@@ -206,7 +207,7 @@ export default function GPACalculatorPage() {
                     onChange={(e) => handleCreditsChange(subject.id, Number(e.target.value))}
                     min={1}
                     step={1}
-                    className={input}
+                    className={classes.input}
                     aria-label="Credits"
                   />
                 </div>
@@ -227,7 +228,7 @@ export default function GPACalculatorPage() {
             <button
               type="button"
               onClick={addSubject}
-              className={button}
+              className={classes.button}
               aria-label="Add subject"
             >
               Add Subject

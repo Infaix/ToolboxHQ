@@ -95,14 +95,17 @@ export function useQuestionGenerator() {
     difficulty,
     setDifficulty,
     question,
+    setQuestion,
     answer,
+    setAnswer,
     explanation,
+    setExplanation,
     generateQuestion,
   };
 }
 
 export default function QuestionGeneratorPage() {
-  const { subject, setSubject, difficulty, question, answer, explanation, generateQuestion } = useQuestionGenerator();
+  const { subject, setSubject, difficulty, setDifficulty, question, setQuestion, answer, setAnswer, explanation, setExplanation, generateQuestion } = useQuestionGenerator();
   const isDark = true; // simplified for this build
 
   const classes = {
@@ -153,7 +156,7 @@ export default function QuestionGeneratorPage() {
               <select
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
-                className={input}
+                className={classes.input}
                 aria-label="Subject"
               >
                 <option value="maths">Maths</option>
@@ -169,7 +172,7 @@ export default function QuestionGeneratorPage() {
               <select
                 value={difficulty}
                 onChange={(e) => setDifficulty(e.target.value)}
-                className={input}
+                className={classes.input}
                 aria-label="Difficulty"
               >
                 <option value="easy">Easy</option>

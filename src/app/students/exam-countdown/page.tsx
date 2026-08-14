@@ -15,6 +15,7 @@ interface Exam {
 export function useExamCountdown() {
   const { theme } = useTheme();
   const [exams, setExams] = useState<Exam[]>(() => {
+    if (typeof window === 'undefined') return [];
     const stored = localStorage.getItem('exam-countdown-exams');
     if (stored) {
       try {
@@ -71,7 +72,7 @@ export function useExamCountdown() {
 }
 
 export default function ExamCountdownPage() {
-  const { theme } = useTheme();
+  const { sortedExams, formatCountdown, addExam, removeExam } = useExamCountdown();
   const isDark = true; // simplified for this build
 
   const [examName, setExamName] = useState('');

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
-import { useContext } from 'react';
+import Link from 'next/link';
 import { useTheme } from '@/contexts/ThemeContext';
 
 interface Assessment {
@@ -14,6 +14,7 @@ interface Assessment {
 
 export function useGradeCalculator() {
   const [assessments, setAssessments] = useState<Assessment[]>(() => {
+    if (typeof window === 'undefined') return [];
     const stored = localStorage.getItem('grade-calculator-assessments');
     if (stored) {
       try {
@@ -103,7 +104,7 @@ export function useGradeCalculator() {
 }
 
 export default function GradeCalculatorPage() {
-  const { theme } = useContext(ThemeContext);
+  const { theme } = useTheme();
   const isDark = theme === 'dark';
   const {
     assessments,

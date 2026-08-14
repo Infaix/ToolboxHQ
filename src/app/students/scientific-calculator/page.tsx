@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from 'react';
+import Link from 'next/link';
 
 interface ScientificCalcState {
   display: string;
@@ -13,7 +14,7 @@ export function useScientificCalculator() {
   const [history, setHistory] = useState<string[]>([]);
   const [memory, setMemory] = useState(0);
 
-  const allowedKeys = /[0-9/*+\\-=().%]/;
+  const allowedKeys = /[0-9*+\/=().%-]/;
 
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
     if (!allowedKeys.test(event.key)) {

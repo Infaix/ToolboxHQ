@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from 'react';
+import Link from 'next/link';
 
 interface MathFormula {
   name: string;
@@ -147,7 +148,7 @@ const mathFormulas = {
 };
 
 export function useMathsFormulas() {
-  const [selectedCategory, setSelectedCategory] = useState('algebra');
+  const [selectedCategory, setSelectedCategory] = useState<keyof typeof mathFormulas>('algebra');
   const visibleFormulas = mathFormulas[selectedCategory] || mathFormulas.algebra;
 
   return {

@@ -14,6 +14,7 @@ interface WeightedEntry {
 export function useWeightedAverage() {
   const { theme } = useTheme();
   const [entries, setEntries] = useState<WeightedEntry[]>(() => {
+    if (typeof window === 'undefined') return [];
     const stored = localStorage.getItem('weighted-average-entries');
     if (stored) {
       try {
@@ -159,7 +160,7 @@ export default function WeightedAveragePage() {
                     type="number"
                     value={entry.value}
                     onChange={(e) => handleValueChange(entry.id, Number(e.target.value))}
-                    className={input}
+                    className={classes.input}
                     aria-label="Value"
                   />
                 </div>
@@ -173,7 +174,7 @@ export default function WeightedAveragePage() {
                     onChange={(e) => handleWeightChange(entry.id, Number(e.target.value))}
                     min={0}
                     step={1}
-                    className={input}
+                    className={classes.input}
                     aria-label="Weight"
                   />%
                 </div>
@@ -193,7 +194,7 @@ export default function WeightedAveragePage() {
             <button
               type="button"
               onClick={addEntry}
-              className={button}
+              className={classes.button}
               aria-label="Add entry"
             >
               Add Entry

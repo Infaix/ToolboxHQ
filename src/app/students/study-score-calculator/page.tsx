@@ -15,6 +15,7 @@ interface StudyEntry {
 export function useStudyScoreCalculator() {
   const { theme } = useTheme();
   const [subjects, setSubjects] = useState<StudyEntry[]>(() => {
+    if (typeof window === 'undefined') return [];
     const stored = localStorage.getItem('study-score-calculator-subjects');
     if (stored) {
       try {
@@ -166,7 +167,7 @@ export default function StudyScoreCalculatorPage() {
                     value={subject.name}
                     onChange={(e) => handleNameChange(subject.id, e.target.value)}
                     defaultValue={subject.name}
-                    className={input}
+                    className={classes.input}
                     disabled={true}
                     aria-label="Subject name"
                   />
@@ -182,7 +183,7 @@ export default function StudyScoreCalculatorPage() {
                     min={1}
                     max={50}
                     step={1}
-                    className={input}
+                    className={classes.input}
                     disabled={true}
                     aria-label="Weight"
                   />%
@@ -201,7 +202,7 @@ export default function StudyScoreCalculatorPage() {
                     min={0}
                     max={50}
                     step={1}
-                    className={input}
+                    className={classes.input}
                     disabled={true}
                     aria-label="Study score (0-50)"
                   />
@@ -222,7 +223,7 @@ export default function StudyScoreCalculatorPage() {
             <button
               type="button"
               onClick={addSubject}
-              className={button}
+              className={classes.button}
               aria-label="Add subject"
             >
               Add Subject

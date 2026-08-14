@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 
 const conversionFactors: Record<string, Record<string, number>> = {
   // Length
@@ -53,9 +53,9 @@ const conversionFactors: Record<string, Record<string, number>> = {
   },
   // Temperature (special handling needed)
   temperature: {
-    c: 'c',
-    f: 'f',
-    k: 'k',
+    c: 1,
+    f: 1,
+    k: 1,
   },
   // Speed
   speed: {
@@ -85,31 +85,32 @@ const conversionFactors: Record<string, Record<string, number>> = {
 export function useUnitConverter() {
   const [fromUnit, setFromUnit] = useState('m');
   const [toUnit, setToUnit] = useState('m');
-  const [value, setValue] = useState(1);
-  const [convertedValue, setConvertedValue] = useState(1);
+  const [value, setValue] = useState('1');
 
-  const calculateConversion = useCallback(() => {
+  const calculateConversion = useCallback((): number => {
     const fromFactor = conversionFactors.length?.[fromUnit] ?? 1;
     const toFactor = conversionFactors.length?.[toUnit] ?? 1;
     
     // For temperature, special handling needed
     if (fromUnit === 'temperature' || toUnit === 'temperature') {
       let celsius: number;
-      if (fromUnit === 'c') celsius = parseFloat(value) ?? 0;
-      else if (fromUnit === 'f') celsius = ((parseFloat(value) ?? 0) - 32) * 5 / 9;
-      else if (fromUnit === 'k') celsius = (parseFloat(value) ?? 0) - 273.15;
+      if (fromUnit === 'c') celsius = parseFloat(value) || 0;
+      else if (fromUnit === 'f') celsius = ((parseFloat(value) || 0) - 32) * 5 / 9;
+      else if (fromUnit === 'k') celsius = (parseFloat(value) || 0) - 273.15;
       else celsius = 0;
    
       if (toUnit === 'c') return celsius;
       if (toUnit === 'f') return celsius * 9 / 5 + 32;
       if (toUnit === 'k') return celsius + 273.15;
       return celsius;
-    } else {
-      const valueInBase = parseFloat(value) * fromFactor;
-      const result = valueInBase / toFactor;
-      setConvertedValue(result !== undefined && !isNaN(result) ? result : 0);
     }
+
+    const valueInBase = parseFloat(value) * fromFactor;
+    const result = valueInBase / toFactor;
+    return !isNaN(result) ? result : 0;
   }, [value, fromUnit, toUnit]);
+
+  const convertedValue = calculateConversion();
 
   return {
     fromUnit,
@@ -124,7 +125,7 @@ export function useUnitConverter() {
 }
 
 export default function UnitConverterPage() {
-  const { fromUnit, toUnit, value, setValue, convertedValue, calculateConversion } = useUnitConverter();
+  const { fromUnit, setFromUnit, toUnit, setToUnit, value, setValue, convertedValue, calculateConversion } = useUnitConverter();
 
   // Simple string class names (not template literals)
   const inputClass = 'w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white';
@@ -136,32 +137,6 @@ export default function UnitConverterPage() {
   const resultCardClass = 'mt-6 rounded-xl border p-6 bg-gray-50 dark:bg-gray-800';
 
   const isDark = true; // simplified for this build
-
-  // Pre-compute conversion result display
-  let conversionResult = null;
-
-  // Always compute the conversion when page loads
-  // This ensures the convertedValue state is updated
-  calculateConversion();
-
-  // Build the conversion display
-  conversionResult = (
-    <div>
-      <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-        1 {fromUnit} = {convertedValue} {toUnit}
-      </p>
-      <div>
-        <button
-          type="button"
-          onClick={calculateConversion}
-          className={buttonClass}
-          aria-label="Convert units"
-        >
-          Convert
-        </button>
-      </div>
-    </div>
-  );
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">

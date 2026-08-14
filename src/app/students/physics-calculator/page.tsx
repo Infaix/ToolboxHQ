@@ -133,7 +133,7 @@ export function usePhysicsCalculator() {
     }, {} as Record<string, string>);
   });
 
-  const calculate = useCallback(() => {
+  const calculate = useCallback((): number => {
     let result = 0;
     try {
       if (calculation.name === 'Speed') {
@@ -187,6 +187,7 @@ export function usePhysicsCalculator() {
     } catch (e) {
       // Handle error silently
     }
+    return result;
   }, [calculation, inputs]);
 
   const handleInputChange = useCallback((name: string, value: string) => {
@@ -251,7 +252,11 @@ export default function PhysicsCalculatorPage() {
           </h2>
           <div className="grid grid-cols-2 gap-4">
             {calculations.map((calc) => (
-              <div key={calc.name} className="group cursor-pointer hover:text-blue-600 dark:hover:text-blue-400">
+              <div
+                key={calc.name}
+                className="group cursor-pointer hover:text-blue-600 dark:hover:text-blue-400"
+                onClick={() => setCalculation(calc)}
+              >
                 <div className="p-4 rounded-xl border border-gray-200 bg-white transition-colors dark:border-gray-700 dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800">
                   <h3 className="font-medium text-gray-900 dark:text-white">{calc.name}</h3>
                   <p className="text-sm text-gray-500 dark:text-gray-400">{calc.formula}</p>

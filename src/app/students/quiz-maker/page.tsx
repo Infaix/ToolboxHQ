@@ -23,6 +23,14 @@ interface QuizState {
 export function useQuizMaker() {
   const { theme } = useTheme();
   const [quizState, setQuizState] = useState<QuizState>(() => {
+    if (typeof window === 'undefined') {
+      return {
+        questions: [],
+        currentQuestionIndex: 0,
+        score: 0,
+        completed: false,
+      };
+    }
     const stored = localStorage.getItem('quiz-maker-quiz');
     if (stored) {
       try {
@@ -208,7 +216,7 @@ export default function QuizMakerPage() {
           </div>
         )}
 
-        {!quizState.questions.length > 0 && (
+        {quizState.questions.length > 0 && !quizState.completed && (
           <div>
             <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
               Quiz in Progress
@@ -216,7 +224,7 @@ export default function QuizMakerPage() {
             <p className="text-sm text-gray-500 dark:text-gray-400">
               Question {quizState.currentQuestionIndex + 1} of {quizState.questions.length}
             </p>
-            <div className="progressBar" role="progressbar" aria-valuemin="0" aria-valuemax={100} aria-valuenow={progressPercentage()}>
+            <div className="progressBar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progressPercentage()}>
               <div className="progressFill" style={{ width: `${progressPercentage()}%` }} />
             </div>
 
@@ -244,7 +252,7 @@ export default function QuizMakerPage() {
 
         {quizState.completed || (canProceed && quizState.questions.length > 0) && (
           <div>
-            {isLastQuestion && quizState.questions.length > 0 && (
+            {isLastQuestion() && quizState.questions.length > 0 && (
               <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
                 Last question - make your answer count!
               </p>

@@ -15,6 +15,7 @@ interface Note {
 export function useNotes() {
   const { theme } = useTheme();
   const [notes, setNotes] = useState<Note[]>(() => {
+    if (typeof window === 'undefined') return [];
     const stored = localStorage.getItem('notes-notes');
     if (stored) {
       try {
@@ -122,7 +123,7 @@ export default function NotesPage() {
               <input
                 type="text"
                 placeholder="e.g. Lecture Notes - Week 3"
-                className={input}
+                className={classes.input}
                 aria-label="Note title"
               />
             </div>
@@ -130,7 +131,7 @@ export default function NotesPage() {
               <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
                 Subject
               </label>
-              <select className={input}>
+              <select className={classes.input}>
                 <option value="">Select subject</option>
                 <option value="Maths">Maths</option>
                 <option value="Physics">Physics</option>

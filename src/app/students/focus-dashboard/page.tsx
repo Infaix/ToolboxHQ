@@ -1,14 +1,19 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { useContext } from 'react';
+import Link from 'next/link';
 import { useTheme } from '@/contexts/ThemeContext';
+
+interface StudySession {
+  completed: boolean;
+}
 
 export function useFocusDashboard() {
   const { theme } = useTheme();
 
   // Read data from localStorage used by other student tools
-  const getStudySessions = () => {
+  const getStudySessions = (): StudySession[] => {
+    if (typeof window === 'undefined') return [];
     const stored = localStorage.getItem('study-timer-sessions');
     if (stored) {
       try {
@@ -21,14 +26,15 @@ export function useFocusDashboard() {
   };
 
   const getFlashcardProgress = () => {
+    if (typeof window === 'undefined') return { totalCards: 0, knownCards: 0 };
     const stored = localStorage.getItem('flashcards-decks');
     if (stored) {
       try {
-        const decks = JSON.parse(stored);
+        const decks: { name: string; cards: { known: boolean }[] }[] = JSON.parse(stored);
         let totalCards = 0;
         let knownCards = 0;
-        decks.forEach((deck: any) => {
-          deck.cards.forEach((card: any) => {
+        decks.forEach((deck) => {
+          deck.cards.forEach((card) => {
             totalCards++;
             if (card.known) knownCards++;
         });
@@ -42,6 +48,7 @@ export function useFocusDashboard() {
   };
 
   const getStudyTime = () => {
+    if (typeof window === 'undefined') return 0;
     const stored = localStorage.getItem('study-planner-study-time');
     if (stored) {
       try {

@@ -22,6 +22,7 @@ interface StudyPlannerState {
 export function useStudyPlanner() {
   const { theme } = useTheme();
   const [subjects, setSubjects] = useState<string[]>(() => {
+    if (typeof window === 'undefined') return [];
     const stored = localStorage.getItem('study-planner-subjects');
     if (stored) {
       try {
@@ -38,6 +39,7 @@ export function useStudyPlanner() {
   }, [subjects]);
 
   const [tasks, setTasks] = useState<Task[]>(() => {
+    if (typeof window === 'undefined') return [];
     const stored = localStorage.getItem('study-planner-tasks');
     if (stored) {
       try {
@@ -173,7 +175,7 @@ export default function StudyPlannerPage() {
               <input
                 type="text"
                 placeholder="e.g. Review Chapter 4"
-                className={input}
+                className={classes.input}
                 aria-label="Task title"
               />
             </div>
@@ -181,7 +183,7 @@ export default function StudyPlannerPage() {
               <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
                 Subject
               </label>
-              <select className={input}>
+              <select className={classes.input}>
                 <option value="">Select subject</option>
                 {subjects.map((subject) => (
                   <option key={subject} value={subject}>
@@ -197,7 +199,7 @@ export default function StudyPlannerPage() {
               <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
                 Priority
               </label>
-              <select className={input}>
+              <select className={classes.input}>
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
                 <option value="high">High</option>
@@ -209,7 +211,7 @@ export default function StudyPlannerPage() {
               </label>
               <input
                 type="date"
-                className={input}
+                className={classes.input}
                 aria-label="Due date"
               />
             </div>
