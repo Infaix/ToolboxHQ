@@ -212,6 +212,137 @@ export const tools: Tool[] = [
     clientSideOnly: true,
     relatedTools: ['unit-converter'],
   },
+  // Student tools
+  {
+    name: 'ATAR Calculator',
+    slug: 'atar-calculator',
+    category: 'utilities',
+    group: 'students',
+    description: 'Estimate your ATAR based on VCE study scores',
+    icon: '📊',
+    keywords: ['atAR', 'study score', 'VTAC', 'scaling', 'subject', 'aggregate'],
+    processesFiles: false,
+    clientSideOnly: true,
+    relatedTools: ['grade-calculator', 'weighted-average-calculator'],
+    path: '/students/atar-calculator',
+  },
+  {
+    name: 'VCE Study Score Calculator',
+    slug: 'study-score-calculator',
+    category: 'utilities',
+    group: 'students',
+    description: 'Calculate aggregate and study scores for VCE subjects',
+    icon: '🎓',
+    keywords: ['study score', 'VCE', 'aggregate', 'subject', 'scaling'],
+    processesFiles: false,
+    clientSideOnly: true,
+    relatedTools: ['ATAR Calculator', 'grade-calculator'],
+    path: '/students/study-score-calculator',
+  },
+  {
+    name: 'ATAR Goal Calculator',
+    slug: 'atar-goal-calculator',
+    category: 'utilities',
+    group: 'students',
+    description: 'Determine what study scores you need to achieve your target ATAR',
+    icon: '🎯',
+    keywords: ['ATAR goal', 'target', 'study score', 'required', 'VTAC'],
+    processesFiles: false,
+    clientSideOnly: true,
+    relatedTools: ['ATAR Calculator', 'grade-calculator'],
+    path: '/students/atar-goal-calculator',
+  },
+  {
+    name: 'Grade Calculator',
+    slug: 'grade-calculator',
+    category: 'utilities',
+    group: 'students',
+    description: 'Calculate weighted overall percentage from assessments',
+    icon: '📝',
+    keywords: ['grade', 'assessment', 'weighted', 'percentage', 'mark'],
+    processesFiles: false,
+    clientSideOnly: true,
+    relatedTools: ['weighted-average-calculator', 'study-score-calculator'],
+    path: '/students/grade-calculator',
+  },
+  {
+    name: 'Weighted Average Calculator',
+    slug: 'weighted-average-calculator',
+    category: 'utilities',
+    group: 'students',
+    description: 'Calculate weighted averages from multiple values and weights',
+    icon: '⚖️',
+    keywords: ['weighted average', 'calculation', 'values', 'weights', 'percentage'],
+    processesFiles: false,
+    clientSideOnly: true,
+    relatedTools: ['grade-calculator', 'study-score-calculator'],
+    path: '/students/weighted-average-calculator',
+  },
+  {
+    name: 'Flashcards',
+    slug: 'flashcards',
+    category: 'utilities',
+    group: 'students',
+    description: 'Study with digital flashcards stored in browser localStorage',
+    icon: '🃏',
+    keywords: ['flashcards', 'study', 'localStorage', 'quiz', 'memorization'],
+    processesFiles: false,
+    clientSideOnly: true,
+    relatedTools: ['study-planner', 'study-timer'],
+    path: '/students/flashcards',
+  },
+  {
+    name: 'Study Planner',
+    slug: 'study-planner',
+    category: 'utilities',
+    group: 'students',
+    description: 'Plan your study sessions and track progress with localStorage',
+    icon: '📅',
+    keywords: ['study planner', 'schedule', 'localStorage', 'tracking', 'goals'],
+    processesFiles: false,
+    clientSideOnly: true,
+    relatedTools: ['flashcards', 'study-timer'],
+    path: '/students/study-planner',
+  },
+  {
+    name: 'Study Timer',
+    slug: 'study-timer',
+    category: 'utilities',
+    group: 'students',
+    description: 'Pomodoro-style study timer stored in browser localStorage',
+    icon: '⏱️',
+    keywords: ['timer', 'Pomodoro', 'study', 'localStorage', 'focus'],
+    processesFiles: false,
+    clientSideOnly: true,
+    relatedTools: ['flashcards', 'study-planner'],
+    path: '/students/study-timer',
+  },
+  {
+    name: 'Exam Countdown',
+    slug: 'exam-countdown',
+    category: 'utilities',
+    group: 'students',
+    description: 'Countdown timer to your exams with localStorage persistence',
+    icon: '📢',
+    keywords: ['countdown', 'exam', 'deadline', 'localStorage', 'timer'],
+    processesFiles: false,
+    clientSideOnly: true,
+    relatedTools: ['study-planner', 'study-timer'],
+    path: '/students/exam-countdown',
+  },
+  {
+    name: 'Quiz Maker',
+    slug: 'quiz-maker',
+    category: 'utilities',
+    group: 'students',
+    description: 'Create and practice quizzes with localStorage persistence',
+    icon: '📝',
+    keywords: ['quiz', 'practice', 'localStorage', 'test', 'revision'],
+    processesFiles: false,
+    clientSideOnly: true,
+    relatedTools: ['flashcards', 'study-planner'],
+    path: '/students/quiz-maker',
+  },
 ];
 
 /** Resolve the canonical URL for a tool. */
@@ -219,36 +350,7 @@ export function toolUrl(tool: Tool): string {
   return tool.path ?? `/${tool.category}/${tool.slug}`;
 }
 
-export function getToolBySlug(slug: string): Tool | undefined {
-  return tools.find((tool) => tool.slug === slug);
-}
-
-export function getToolsByCategory(category: ToolCategory): Tool[] {
-  return tools.filter((tool) => tool.category === category);
-}
-
+/** Get tools by group (section). */
 export function getToolsByGroup(group: ToolGroup): Tool[] {
   return tools.filter((tool) => tool.group === group);
-}
-
-export function searchTools(query: string): Tool[] {
-  const lowerQuery = query.trim().toLowerCase();
-  if (!lowerQuery) return [];
-  return tools
-    .filter(
-      (tool) =>
-        tool.name.toLowerCase().includes(lowerQuery) ||
-        tool.description.toLowerCase().includes(lowerQuery) ||
-        tool.group.toLowerCase().includes(lowerQuery) ||
-        tool.keywords.some((keyword) => keyword.toLowerCase().includes(lowerQuery))
-    )
-    .sort((a, b) => {
-      const aExact = a.name.toLowerCase() === lowerQuery;
-      const bExact = b.name.toLowerCase() === lowerQuery;
-      if (aExact !== bExact) return aExact ? -1 : 1;
-      const aStarts = a.name.toLowerCase().startsWith(lowerQuery);
-      const bStarts = b.name.toLowerCase().startsWith(lowerQuery);
-      if (aStarts !== bStarts) return aStarts ? -1 : 1;
-      return a.name.localeCompare(b.name);
-    });
 }
