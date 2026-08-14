@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useContext } from 'react';
+import Link from 'next/link';
 import { useTheme } from '@/contexts/ThemeContext';
 
 interface AtarGoalTarget {
@@ -179,7 +180,7 @@ export default function AtarGoalCalculatorPage() {
                 min={50}
                 max={99.95}
                 step={0.1}
-                className={numberInput}
+                className="w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                 aria-label="Target ATAR"
               />
             </div>
@@ -210,7 +211,7 @@ export default function AtarGoalCalculatorPage() {
                     value={subject.name}
                     onChange={(e) => handleNameChange(subject.id, e.target.value)}
                     defaultValue={subject.name}
-                    className={input}
+                    className="w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                     disabled={hasAnyScore()}
                     aria-label="Subject name"
                   />
@@ -229,7 +230,7 @@ export default function AtarGoalCalculatorPage() {
                     min={0}
                     max={50}
                     step={1}
-                    className={input}
+                    className="w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                     disabled={hasAnyScore()}
                     aria-label="Study score (0-50)"
                   />
@@ -251,7 +252,7 @@ export default function AtarGoalCalculatorPage() {
             <button
               type="button"
               onClick={addSubject}
-              className={button}
+              className="ghostButton ml-2 sm:mt-0"
               aria-label="Add subject"
             >
               Add Subject

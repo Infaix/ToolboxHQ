@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { useContext } from 'react';
-import ThemeContext from '@/contexts/ThemeContext';
+import { useTheme } from '@/contexts/ThemeContext';
 import { getToolsByGroup, toolUrl } from '@/lib/toolRegistry';
 
 export const metadata: Metadata = {
@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 };
 
 export default function StudentToolsPage() {
-  const { theme } = useContext(ThemeContext);
+  const { theme } = useTheme();
   const isDark = theme === 'dark';
 
   // Define all student tools with categorization

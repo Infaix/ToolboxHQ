@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+import Link from 'next/link';
 
 interface Question {
   id: string;

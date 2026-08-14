@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useContext } from 'react';
+import Link from 'next/link';
 import { useTheme } from '@/contexts/ThemeContext';
 
 interface SubjectEntry {
@@ -162,7 +163,7 @@ export default function AtarCalculatorPage() {
                     value={subject.name}
                     onChange={(e) => handleNameChange(subject.id, e.target.value)}
                     defaultValue={subject.name}
-                    className={input}
+                    className="w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                     disabled={hasAnyScore()}
                     aria-label="Subject name"
                   />
@@ -181,7 +182,7 @@ export default function AtarCalculatorPage() {
                     min={0}
                     max={50}
                     step={1}
-                    className={input}
+                    className="w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                     disabled={hasAnyScore()}
                     aria-label="Study score (0-50)"
                   />
@@ -203,7 +204,7 @@ export default function AtarCalculatorPage() {
             <button
               type="button"
               onClick={addSubject}
-              className={button}
+              className="ghostButton ml-2 sm:mt-0"
               aria-label="Add subject"
             >
               Add Subject

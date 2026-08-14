@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useContext } from 'react';
+import Link from 'next/link';
 import { useTheme } from '@/contexts/ThemeContext';
 
 interface Exam {
@@ -46,12 +47,8 @@ export function useExamCountdown() {
     const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
     
-    if (days > 0) {
-      return `${days}d ${hours}h ${minutes}m`;
-    }
-    if (hours > 0) {
-      return `${hours}h ${minutes}m`;
-    }
+    if (days > 0) return `${days}d ${hours}h ${minutes}m`;
+    if (hours > 0) return `${hours}h ${minutes}m`;
     return `${minutes}m`;
   }, []);
 
@@ -77,17 +74,12 @@ export default function ExamCountdownPage() {
   const { theme } = useTheme();
   const isDark = true; // simplified for this build
 
-  const {
-    exams,
-    setExams,
-    sortedExams,
-    formatCountdown,
-    addExam,
-    removeExam,
-  } = useExamCountdown();
+  const [examName, setExamName] = useState('');
+  const [examSubject, setExamSubject] = useState('');
+  const [examDate, setExamDate] = useState('');
 
   const classes = {
-    input: `w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white`,
+    input: 'w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white',
     row: 'flex items-center gap-2',
     cell: 'flex-1 min-w-0',
     label: 'text-sm font-medium text-gray-600 dark:text-gray-400',
@@ -102,10 +94,10 @@ export default function ExamCountdownPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-        <nav className="mb-6 border-b border-gray-200 dark:border-gray-700 pb-4">
+        <nav className="mb-6 border-b border-gray-300 pb-4">
           <Link
             href="/students"
-            className="inline-flex items-center gap-1 text-sm text-gray-500 transition hover:text-gray-700 dark:hover:text-gray-200"
+            className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-200"
           >
             <svg
               className="h-4 w-4"
@@ -136,7 +128,9 @@ export default function ExamCountdownPage() {
               </label>
               <input
                 type="text"
-                className={input}
+                value={examName}
+                onChange={(e) => setExamName(e.target.value)}
+                className={classes.input}
                 aria-label="Exam name"
               />
             </div>
@@ -144,7 +138,11 @@ export default function ExamCountdownPage() {
               <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
                 Subject
               </label>
-              <select className={input}>
+              <select
+                value={examSubject}
+                onChange={(e) => setExamSubject(e.target.value)}
+                className={classes.input}
+              >
                 <option value="">Select subject</option>
                 <option value="Maths">Maths</option>
                 <option value="Physics">Physics</option>
@@ -159,20 +157,28 @@ export default function ExamCountdownPage() {
               </label>
               <input
                 type="datetime-local"
-                className={input}
+                value={examDate}
+                onChange={(e) => setExamDate(e.target.value)}
+                className={classes.input}
                 aria-label="Exam date"
               />
             </div>
-            <button
-              type="button"
-              onClick={() => {
-                // Would need state to capture inputs
-                alert('Exam addition - implement form capture');
-              }}
-            >
-              Add Exam
-            </button>
           </div>
+          <button
+            type="button"
+            onClick={() => {
+              if (examName.trim() && examSubject.trim() && examDate.trim()) {
+                addExam(examName, examSubject, examDate);
+                setExamName('');
+                setExamSubject('');
+                setExamDate('');
+              }
+            }}
+            className={classes.button}
+            aria-label="Add exam"
+          >
+            Add Exam
+          </button>
         </div>
 
         {sortedExams().length > 0 && (

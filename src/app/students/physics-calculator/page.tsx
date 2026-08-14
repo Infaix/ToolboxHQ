@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface PhysicsCalculation {
   name: string;
   formula: string;
-  inputs: { name: string; unit: string }[];
+  inputs: { name: string; unit: string; defaultValue?: string }[];
   resultUnit: string;
 }
 
@@ -44,7 +46,7 @@ export function usePhysicsCalculator() {
       formula: 'weight = mass × gravity',
       inputs: [
         { name: 'mass', unit: 'kg' },
-        { name: 'gravity', unit: 'm/s²', defaultValue: 9.8 },
+        { name: 'gravity', unit: 'm/s²', defaultValue: '9.8' },
       ],
       resultUnit: 'N',
     },
@@ -72,7 +74,7 @@ export function usePhysicsCalculator() {
       inputs: [
         { name: 'mass', unit: 'kg' },
         { name: 'height', unit: 'm' },
-        { name: 'gravity', unit: 'm/s²', defaultValue: 9.8 },
+        { name: 'gravity', unit: 'm/s²', defaultValue: '9.8' },
       ],
       resultUnit: 'J',
     },
@@ -123,19 +125,17 @@ export function usePhysicsCalculator() {
     },
   ];
 
-  const calculation = useState(calculations[0])[0];
+  const [calculation, setCalculation] = useState(calculations[0]);
   const [inputs, setInputs] = useState(() => {
     return calculation.inputs.reduce((acc, input) => {
-      acc[input.name] = input.defaultValue !== undefined ? input.defaultValue : '';
+      acc[input.name] = input.defaultValue !== undefined ? String(input.defaultValue) : '';
       return acc;
     }, {} as Record<string, string>);
   });
 
   const calculate = useCallback(() => {
-    // Simple evaluation - in a real app, use a proper math parser
     let result = 0;
     try {
-      // Simple formula evaluation for demonstration
       if (calculation.name === 'Speed') {
         const distance = parseFloat(inputs.distance) || 0;
         const time = parseFloat(inputs.time) || 1;
@@ -144,14 +144,50 @@ export function usePhysicsCalculator() {
         const mass = parseFloat(inputs.mass) || 0;
         const acceleration = parseFloat(inputs.acceleration) || 0;
         result = mass * acceleration;
+      } else if (calculation.name === 'Weight') {
+        const mass = parseFloat(inputs.mass) || 0;
+        const gravity = parseFloat(inputs.gravity) || 9.8;
+        result = mass * gravity;
+      } else if (calculation.name === 'Momentum') {
+        const mass = parseFloat(inputs.mass) || 0;
+        const velocity = parseFloat(inputs.velocity) || 0;
+        result = mass * velocity;
+      } else if (calculation.name === 'Kinetic Energy') {
+        const mass = parseFloat(inputs.mass) || 0;
+        const velocity = parseFloat(inputs.velocity) || 0;
+        result = 0.5 * mass * velocity * velocity;
+      } else if (calculation.name === 'Gravitational Potential Energy') {
+        const mass = parseFloat(inputs.mass) || 0;
+        const height = parseFloat(inputs.height) || 0;
+        const gravity = parseFloat(inputs.gravity) || 9.8;
+        result = mass * gravity * height;
+      } else if (calculation.name === 'Work') {
+        const force = parseFloat(inputs.force) || 0;
+        const distance = parseFloat(inputs.distance) || 0;
+        result = force * distance;
+      } else if (calculation.name === 'Power') {
+        const work = parseFloat(inputs.work) || 0;
+        const time = parseFloat(inputs.time) || 1;
+        result = work / time;
+      } else if (calculation.name === 'Ohm\'s Law') {
+        const current = parseFloat(inputs.current) || 0;
+        const resistance = parseFloat(inputs.resistance) || 0;
+        result = current * resistance;
+      } else if (calculation.name === 'Electrical Power') {
+        const voltage = parseFloat(inputs.voltage) || 0;
+        const current = parseFloat(inputs.current) || 0;
+        result = voltage * current;
+      } else if (calculation.name === 'Wave Speed') {
+        const frequency = parseFloat(inputs.frequency) || 0;
+        const wavelength = parseFloat(inputs.wavelength) || 0;
+        result = frequency * wavelength;
       } else {
         result = 0;
       }
-      setDisplay ? setDisplay(String(result)) : null;
     } catch (e) {
-      setDisplay('Error');
+      // Handle error silently
     }
-  }, [inputs]);
+  }, [calculation, inputs]);
 
   const handleInputChange = useCallback((name: string, value: string) => {
     setInputs(prev => ({ ...prev, [name]: value }));
@@ -189,7 +225,7 @@ export default function PhysicsCalculatorPage() {
         <nav className="mb-6 border-b border-gray-200 dark:border-gray-700 pb-4">
           <Link
             href="/students"
-            className="inline-flex items-center gap-1 text-sm text-gray-500 transition hover:text-gray-700 dark:hover:text-gray-200"
+            className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-200"
           >
             <svg
               className="h-4 w-4"
@@ -239,7 +275,7 @@ export default function PhysicsCalculatorPage() {
                     type="number"
                     value={inputs[input.name] ?? ''}
                     onChange={(e) => handleInputChange(input.name, e.target.value)}
-                    className={input}
+                    className={classes.input}
                     aria-label={input.name}
                   />
                   <span className="text-xs text-gray-500 dark:text-gray-400">{input.unit}</span>
@@ -249,16 +285,14 @@ export default function PhysicsCalculatorPage() {
             <button
               type="button"
               onClick={calculate}
-              className="w-full bg-blue-600 dark:bg-blue-700 text-white py-2 rounded mt-4"
+              className={classes.button}
               aria-label="Calculate result"
             >
               Calculate
             </button>
-            {display !== undefined && display !== '' && (
-              <p className="mt-3 text-lg font-bold text-gray-900 dark:text-white">
-                Result: {display} {calculation.resultUnit}
-              </p>
-            )}
+            <p className="mt-3 text-lg font-bold text-gray-900 dark:text-white">
+              Result: {calculate()} {calculation.resultUnit}
+            </p>
           </div>
         )}
       </div>
