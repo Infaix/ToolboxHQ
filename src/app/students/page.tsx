@@ -3,95 +3,163 @@ import { useContext } from 'react';
 import ThemeContext from '@/contexts/ThemeContext';
 import { getToolsByGroup, toolUrl } from '@/lib/toolRegistry';
 
-interface StudentTool {
-  name: string;
-  path: string;
-  description: string;
-  icon: string;
-}
-
-const studentTools: StudentTool[] = [
-  {
-    name: 'Grade Calculator',
-    path: '/students/grade-calculator',
-    description: 'Calculate weighted overall percentage from assessments',
-    icon: '📝',
-  },
-  {
-    name: 'ATAR Calculator',
-    path: '/students/atar-calculator',
-    description: 'Estimate your ATAR based on VCE study scores',
-    icon: '📊',
-  },
-  {
-    name: 'VCE Study Score Calculator',
-    path: '/students/study-score-calculator',
-    description: 'Calculate aggregate and study scores for VCE subjects',
-    icon: '🎓',
-  },
-  {
-    name: 'ATAR Goal Calculator',
-    path: '/students/atar-goal-calculator',
-    description: 'Determine what study scores you need to achieve your target ATAR',
-    icon: '🎯',
-  },
-  {
-    name: 'Weighted Average Calculator',
-    path: '/students/weighted-average-calculator',
-    description: 'Calculate weighted averages from multiple values and weights',
-    icon: '⚖️',
-  },
-  {
-    name: 'Flashcards',
-    path: '/students/flashcards',
-    description: 'Study with digital flashcards stored in browser localStorage',
-    icon: '🃏',
-  },
-  {
-    name: 'Study Planner',
-    path: '/students/study-planner',
-    description: 'Plan your study sessions and track progress with localStorage',
-    icon: '📅',
-  },
-  {
-    name: 'Study Timer',
-    path: '/students/study-timer',
-    description: 'Pomodoro-style study timer stored in browser localStorage',
-    icon: '⏱️',
-  },
-  {
-    name: 'Exam Countdown',
-    path: '/students/exam-countdown',
-    description: 'Countdown timer to your exams with localStorage persistence',
-    icon: '📢',
-  },
-  {
-    name: 'Quiz Maker',
-    path: '/students/quiz-maker',
-    description: 'Create and practice quizzes with localStorage persistence',
-    icon: '📝',
-  },
-];
-
 export const metadata: Metadata = {
-  title: 'Student Tools',
-  description: 'Useful free tools for school and study — client-side, private, and instantly accessible.',
+  title: 'Student Tools - ToolboxHQ',
+  description: 'Free student tools for VCE, ATAR, GPA, calculators, planners, flashcards, and study productivity. All client-side in your browser.',
 };
 
 export default function StudentToolsPage() {
   const { theme } = useContext(ThemeContext);
   const isDark = theme === 'dark';
 
+  // Define all 15 student tools with categorization
+  const allTools = [
+    // Academic Results
+    {
+      name: 'ATAR Calculator',
+      path: '/students/atar-calculator',
+      category: 'Academic Results',
+      description: 'Estimate your ATAR based on VCE study scores',
+      icon: '📊',
+      prominent: true,
+    },
+    {
+      name: 'Study Score Calculator',
+      path: '/students/study-score-calculator',
+      category: 'Academic Results',
+      description: 'Calculate estimated study scores for VCE subjects',
+      icon: '🎓',
+    },
+    {
+      name: 'Grade Calculator',
+      path: '/students/grade-calculator',
+      category: 'Academic Results',
+      description: 'Calculate percentages from marks and weights',
+      icon: '📝',
+    },
+    {
+      name: 'GPA Calculator',
+      path: '/students/gpa-calculator',
+      category: 'Academic Results',
+      description: 'Calculate weighted GPA on 4.0 scale',
+      icon: '📈',
+    },
+    // Study & Productivity
+    {
+      name: 'Study Planner',
+      path: '/students/study-planner',
+      category: 'Study & Productivity',
+      description: 'Plan study sessions and track progress with localStorage',
+      icon: '📅',
+    },
+    {
+      name: 'Flashcards',
+      path: '/students/flashcards',
+      category: 'Study & Productivity',
+      description: 'Create and study flashcard decks locally',
+      icon: '🃏',
+    },
+    {
+      name: 'Pomodoro Timer',
+      path: '/students/pomodoro',
+      category: 'Study & Productivity',
+      description: '25/5 study-break timer with custom durations',
+      icon: '⏱️',
+    },
+    {
+      name: 'Exam Countdown',
+      path: '/students/exam-countdown',
+      category: 'Study & Productivity',
+      description: 'Countdown to exams with localStorage persistence',
+      icon: '📢',
+    },
+    {
+      name: 'Notes',
+      path: '/students/notes',
+      category: 'Study & Productivity',
+      description: 'Create, edit, and organize notes by subject',
+      icon: '📝',
+    },
+    {
+      name: 'Focus Dashboard',
+      path: '/students/dashboard',
+      category: 'Study & Productivity',
+      description: 'Productivity dashboard with tasks, timer, and exams',
+      icon: '📊',
+    },
+    // Maths & Science
+    {
+      name: 'Scientific Calculator',
+      path: '/students/scientific-calculator',
+      category: 'Maths & Science',
+      description: 'Arithmetic, powers, roots, trig, logarithms',
+      icon: '🧮',
+    },
+    {
+      name: 'Physics Calculator',
+      path: '/students/physics-calculator',
+      category: 'Maths & Science',
+      description: 'Solve physics problems with common formulas',
+      icon: '🧪',
+    },
+    {
+      name: 'Unit Converter',
+      path: '/students/unit-converter',
+      category: 'Maths & Science',
+      description: 'Convert between units (length, mass, temperature, etc.)',
+      icon: '🔄',
+    },
+    {
+      name: 'Maths Formula Reference',
+      path: '/students/maths-formulas',
+      category: 'Maths & Science',
+      description: 'Algebra, quadratics, functions, geometry, calculus',
+      icon: '📚',
+    },
+    {
+      name: 'Physics Formula Reference',
+      path: '/students/physics-formulas',
+      category: 'Maths & Science',
+      description: 'Mechanics, energy, momentum, waves, electricity',
+      icon: '📖',
+    },
+    {
+      name: 'Question Generator',
+      path: '/students/question-generator',
+      category: 'Maths & Science',
+      description: 'Generate random practice prompts by subject',
+      icon: '❓',
+    },
+    // Additional Tools
+    {
+      name: 'Quiz Maker',
+      path: '/students/quiz-maker',
+      category: 'Additional',
+      description: 'Create and practice quizzes with localStorage',
+      icon: '📝',
+    },
+  ];
+
+  // Separate prominent tools (ATAR etc.) from the rest
+  const prominentTools = allTools.filter((t) => t.prominent);
+  const otherTools = allTools.filter((t) => !t.prominent);
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-        <nav className="mb-12 border-b border-gray-200 dark:border-gray-700 pb-6">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-1 text-sm text-gray-500 transition hover:text-gray-700 dark:hover:text-gray-200"
-          >
+      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+        {/* Header */}
+        <header className="border-b border-gray-200 dark:border-gray-700 mb-10 pb-6">
+          <div className="flex items-start gap-3">
+            <div className="flex-1">
+              <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
+                Student Tools
+              </h1>
+              <p className="mt-2 text-lg text-gray-600 dark:text-gray-400">
+                Free tools for studying, VCE, maths, physics and productivity. All run entirely in your browser.
+              </p>
+            </div>
             <svg
-              className="h-4 w-4"
+              className="h-12 w-12 text-blue-600 dark:text-blue-400"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -99,46 +167,70 @@ export default function StudentToolsPage() {
               strokeLinecap="round"
               strokeLinejoin="round"
             >
-              <path d="M15 18l-6-6 6-6" />
+              <path d="M12 5v14M5 12h14" />
             </svg>
-            All tools
-          </Link>
-          <h1 className="mt-4 text-4xl font-bold tracking-tight text-gray-900 dark:text-white">
-            Student Tools
-          </h1>
-          <p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
-            Client-side tools for school and study. Your data stays in your browser.
-          </p>
-        </nav>
+          </div>
+        </header>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {studentTools.map((tool) => (
-            <div
-              key={tool.name}
-              className="group rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md dark:border-gray-700 dark:bg-gray-800 dark:hover:border-blue-400 cursor-pointer"
-              onClick={() => window.location.href = tool.path}
-            >
-              <div className="h-12 w-12 rounded-xl flex items-center justify-center mb-4 text-3xl opacity-90 group-hover:text-blue-600 dark:group-hover:text-blue-400">
-                {tool.icon}
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 transition-colors">
-                {tool.name}
-              </h3>
-              <p className="mt-2 text-gray-600 dark:text-gray-400 line-clamp-2">
-                {tool.description}
-              </p>
-            </div>
-          ))}
-        </div>
+        {/* Prominent Tools Section - ATAR Calculator leads off */}
+        <section className="mb-12">
+          <h2 className="text-xl font-medium text-gray-900 dark:text-white mb-4">Your ATAR & Study Tools</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {prominentTools.map((tool) => (
+              <a
+                key={tool.path}
+                href={tool.path}
+                className="group rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-all hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md dark:border-gray-700 dark:bg-gray-800 dark:hover:border-blue-600 cursor-pointer"
+              >
+                <div className="h-14 w-14 rounded-xl flex items-center justify-center mb-4 text-3xl opacity-90 group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                  {tool.icon}
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 transition-colors">
+                  {tool.name}
+                </h3>
+                <p className="mt-2 text-gray-600 dark:text-gray-400 line-clamp-2">
+                  {tool.description}
+                </p>
+              </a>
+            ))}
+          </div>
+        </section>
 
-        <div className="mt-12 pt-12 border-t border-gray-200 dark:border-gray-700 text-center text-sm text-gray-500 dark:text-gray-400">
-          <p>All tools run entirely in your browser. Your data is never sent to a server.</p>
+        {/* Category Grid */}
+        <section>
+          <h2 className="text-xl font-medium text-gray-900 dark:text-white mb-4">All Student Tools</h2>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {otherTools.map((tool) => (
+              <a
+                key={tool.path}
+                href={tool.path}
+                className="group rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md dark:border-gray-700 dark:bg-gray-800 dark:hover:border-blue-400 cursor-pointer"
+              >
+                <div className="h-10 w-10 rounded-xl flex items-center justify-center mb-3 text-2xl opacity-90 group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                  {tool.icon}
+                </div>
+                <h3 className="text-base font-medium text-gray-900 dark:text-white group-hover:text-blue-600 transition-colors">
+                  {tool.name}
+                </h3>
+                <p className="mt-1 text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+                  {tool.description}
+                </p>
+              </a>
+            ))}
+          </div>
+        </section>
+
+        {/* Footer note */}
+        <footer className="mt-12 pt-12 border-t border-gray-200 dark:border-gray-700 text-center text-sm text-gray-500 dark:text-gray-400">
+          <p>All tools run entirely in your browser. Your data stays private and is never sent to a server.</p>
           <p className="mt-2">
-            <a href="/" className="transition-colors hover:text-gray-700 dark:hover:text-gray-200">
-              Browse all tools
+            <a href="/"
+              className="transition-colors hover:text-gray-700 dark:hover:text-gray-200"
+            >
+              Back to ToolboxHQ
             </a>
           </p>
-        </div>
+        </footer>
       </div>
     </div>
   );
