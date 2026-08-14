@@ -3,32 +3,44 @@
 import { useState, useCallback } from 'react';
 import Link from 'next/link';
 
-interface Question {
-  id: string;
-  subject: string;
-  topic: string;
+interface QuestionTemplate {
   question: string;
   answer: string;
   explanation: string;
   difficulty: 'easy' | 'medium' | 'hard';
 }
 
-const questionTemplates: Record<string, { question: string; answer: string; explanation: string }[]> = {
+const questionTemplates: Record<string, QuestionTemplate[]> = {
   maths: [
     {
       question: 'What is the value of x in the equation 2x + 5 = 15?',
       answer: 'x = 5',
       explanation: 'Subtract 5 from both sides: 2x = 10, then divide by 2: x = 5',
-    },
-    {
-      question: 'Factorise x² + 5x + 6',
-      answer: '(x + 2)(x + 3)',
-      explanation: 'Find two numbers that multiply to 6 and add to 5: 2 and 3',
+      difficulty: 'easy',
     },
     {
       question: 'Simplify (x³)²',
       answer: 'x⁶',
       explanation: 'Multiply the exponents: 3 × 2 = 6',
+      difficulty: 'easy',
+    },
+    {
+      question: 'Factorise x² + 5x + 6',
+      answer: '(x + 2)(x + 3)',
+      explanation: 'Find two numbers that multiply to 6 and add to 5: 2 and 3',
+      difficulty: 'medium',
+    },
+    {
+      question: 'Solve the quadratic equation x² - 5x + 6 = 0',
+      answer: 'x = 2 or x = 3',
+      explanation: 'Factorise to (x - 2)(x - 3) = 0, then each factor gives a solution',
+      difficulty: 'medium',
+    },
+    {
+      question: 'Find dy/dx for y = x³ - 4x² + 7x - 2',
+      answer: 'dy/dx = 3x² - 8x + 7',
+      explanation: 'Differentiate term by term: d/dx(x³) = 3x², d/dx(-4x²) = -8x, d/dx(7x) = 7, d/dx(-2) = 0',
+      difficulty: 'hard',
     },
   ],
 
@@ -37,44 +49,74 @@ const questionTemplates: Record<string, { question: string; answer: string; expl
       question: 'What is the formula for force?',
       answer: 'F = m × a',
       explanation: 'Newton\'s Second Law of Motion: force equals mass times acceleration',
+      difficulty: 'easy',
     },
     {
       question: 'What is the kinetic energy formula?',
       answer: 'KE = 0.5 × m × v²',
       explanation: 'Kinetic energy depends on mass and the square of velocity',
+      difficulty: 'easy',
+    },
+    {
+      question: 'A 10 kg object is dropped from a height of 5 m. What is its gravitational potential energy? (g = 9.8 m/s²)',
+      answer: 'GPE = m × g × h = 10 × 9.8 × 5 = 490 J',
+      explanation: 'Gravitational potential energy equals mass times gravitational acceleration times height',
+      difficulty: 'medium',
+    },
+    {
+      question: 'Calculate the momentum of a 1200 kg car moving at 20 m/s',
+      answer: 'p = m × v = 1200 × 20 = 24,000 kg·m/s',
+      explanation: 'Momentum equals mass times velocity',
+      difficulty: 'medium',
+    },
+    {
+      question: 'A 0.5 kg ball moving at 8 m/s collides elastically with a stationary ball of the same mass. What is the final velocity of the first ball?',
+      answer: '0 m/s',
+      explanation: 'In a perfectly elastic collision between equal masses, the moving ball stops and transfers all its momentum',
+      difficulty: 'hard',
     },
   ],
 
   english: [
     {
-      question: 'Identify the metaphor in: "The classroom was a zoo".',
-      answer: 'The classroom is compared to a zoo',
-      explanation: 'A metaphor directly compares two unlike things without using "like" or "as"',
-    },
-    {
       question: 'What is the past tense of "go"?',
       answer: 'went',
       explanation: 'The past tense of go is went',
+      difficulty: 'easy',
+    },
+    {
+      question: 'Identify the metaphor in: "The classroom was a zoo".',
+      answer: 'The classroom is compared to a zoo',
+      explanation: 'A metaphor directly compares two unlike things without using "like" or "as"',
+      difficulty: 'medium',
+    },
+    {
+      question: 'Analyse the effect of the simile "Her voice was like a melody" in a persuasive essay.',
+      answer: 'The simile creates a positive, pleasing connotation, evoking harmony to make the subject seem attractive.',
+      explanation: 'Similes compare using "like" or "as" and shape the reader\'s emotional response through association',
+      difficulty: 'hard',
     },
   ],
 
   general: [
     {
-      question: 'What is the capital of Australia?',
-      answer: 'Canberra',
-      explanation: 'Canberra was chosen as the capital of Australia in 1908',
-    },
-    {
       question: 'How many continents are there?',
       answer: '7',
       explanation: 'The generally recognized continents are Africa, Antarctica, Asia, Australia, Europe, North America, and South America',
+      difficulty: 'easy',
+    },
+    {
+      question: 'What is the capital of Australia?',
+      answer: 'Canberra',
+      explanation: 'Canberra was chosen as the capital of Australia in 1908',
+      difficulty: 'medium',
     },
   ],
 };
 
 export function useQuestionGenerator() {
   const [subject, setSubject] = useState('maths');
-  const [difficulty, setDifficulty] = useState('easy');
+  const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('easy');
   const [question, setQuestion] = useState<string | null>(null);
   const [answer, setAnswer] = useState<string | null>(null);
   const [explanation, setExplanation] = useState<string | null>(null);
@@ -82,12 +124,14 @@ export function useQuestionGenerator() {
   const generateQuestion = useCallback(() => {
     const templates = questionTemplates[subject];
     if (!templates || templates.length === 0) return;
-    
-    const template = templates[Math.floor(Math.random() * templates.length)];
+
+    const matching = templates.filter((t) => t.difficulty === difficulty);
+    const pool = matching.length > 0 ? matching : templates;
+    const template = pool[Math.floor(Math.random() * pool.length)];
     setQuestion(template.question);
     setAnswer(template.answer);
     setExplanation(template.explanation);
-  }, [subject]);
+  }, [subject, difficulty]);
 
   return {
     subject,
@@ -106,7 +150,6 @@ export function useQuestionGenerator() {
 
 export default function QuestionGeneratorPage() {
   const { subject, setSubject, difficulty, setDifficulty, question, setQuestion, answer, setAnswer, explanation, setExplanation, generateQuestion } = useQuestionGenerator();
-  const isDark = true; // simplified for this build
 
   const classes = {
     input: 'w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white',
@@ -171,7 +214,7 @@ export default function QuestionGeneratorPage() {
               </label>
               <select
                 value={difficulty}
-                onChange={(e) => setDifficulty(e.target.value)}
+                onChange={(e) => setDifficulty(e.target.value as 'easy' | 'medium' | 'hard')}
                 className={classes.input}
                 aria-label="Difficulty"
               >
@@ -193,8 +236,8 @@ export default function QuestionGeneratorPage() {
         </div>
 
         {question && (
-          <div className="resultCard">
-            <h3 className="title">Question</h3>
+          <div className={classes.resultCard}>
+            <h3 className={classes.title}>Question</h3>
             <p className="text-lg mb-4">{question}</p>
             {answer && (
               <div>

@@ -1,55 +1,48 @@
 "use client";
 
-import { useState, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-
-interface ScientificCalcState {
-  display: string;
-  history: string[];
-  memory: number;
-}
 
 export function useScientificCalculator() {
   const [display, setDisplay] = useState('0');
   const [history, setHistory] = useState<string[]>([]);
   const [memory, setMemory] = useState(0);
 
-  const allowedKeys = /[0-9*+\/=().%-]/;
-
-  const handleKeyDown = useCallback((event: KeyboardEvent) => {
-    if (!allowedKeys.test(event.key)) {
-      event.preventDefault();
-    }
-  }, [allowedKeys]);
-
   const appendToDisplay = useCallback((value: string) => {
-    const prev = display;
-    setDisplay(prevValue => {
-      if (prev === '0' && allowedKeys.test(value) && value !== '.') return value;
+    setDisplay((prev) => {
+      if (prev === '0' && value !== '.') return value;
       if (prev === '.' && value === '.') return prev;
-      return prev === '0' && allowedKeys.test(value) ? value : prev + value;
+      return prev + value;
     });
-  }, [allowedKeys]);
+  }, []);
 
   const calculate = useCallback(() => {
-    try {
-      const expression = display.replace(/×/g, '*').replace(/÷/g, '/');
-      const result = new Function('return ' + expression)();
-      setDisplay(isFinite(result) ? String(result) : 'Error');
-      setHistory(prev => [...prev, `${display} = ${String(result)}`]);
-    } catch (e) {
-      setDisplay('Error');
-    }
+    setDisplay((prevDisplay) => {
+      const expression = prevDisplay.replace(/×/g, '*').replace(/÷/g, '/');
+      if (!expression.trim()) return prevDisplay;
+      try {
+        const result = new Function('return ' + expression)();
+        if (typeof result === 'number' && isFinite(result)) {
+          setHistory((prev) => [...prev, `${prevDisplay} = ${String(result)}`]);
+          return String(result);
+        }
+        setHistory((prev) => [...prev, `${prevDisplay} = Error`]);
+        return 'Error';
+      } catch {
+        setHistory((prev) => [...prev, `${prevDisplay} = Error`]);
+        return 'Error';
+      }
+    });
   }, []);
 
   const clearDisplay = useCallback(() => setDisplay('0'), []);
 
   const deleteLast = useCallback(() => {
-    setDisplay(prev => prev.length > 1 ? prev.slice(0, -1) : '0');
+    setDisplay((prev) => (prev.length > 1 ? prev.slice(0, -1) : '0'));
   }, []);
 
   const memoryAdd = useCallback(() => {
-    setMemory(prev => prev + (parseFloat(display) || 0));
+    setMemory((prev) => prev + (parseFloat(display) || 0));
   }, [display]);
 
   const memoryRecall = useCallback(() => {
@@ -57,6 +50,47 @@ export function useScientificCalculator() {
   }, [memory]);
 
   const memoryClear = useCallback(() => setMemory(0), []);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) return;
+      if (/^[0-9]$/.test(event.key)) {
+        appendToDisplay(event.key);
+        return;
+      }
+      switch (event.key) {
+        case '.':
+          appendToDisplay('.');
+          break;
+        case '+':
+        case '-':
+        case '*':
+        case '/':
+        case '(':
+        case ')':
+        case '%':
+          appendToDisplay(event.key);
+          break;
+        case '=':
+        case 'Enter':
+          event.preventDefault();
+          calculate();
+          break;
+        case 'Escape':
+          clearDisplay();
+          break;
+        case 'Backspace':
+          event.preventDefault();
+          deleteLast();
+          break;
+        default:
+          break;
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [appendToDisplay, calculate, clearDisplay, deleteLast]);
 
   return {
     display,
@@ -74,8 +108,7 @@ export function useScientificCalculator() {
 }
 
 export default function ScientificCalculatorPage() {
-  const { display, setDisplay, history, memory, appendToDisplay, calculate, clearDisplay, deleteLast, memoryAdd, memoryRecall, memoryClear } = useScientificCalculator();
-  const isDark = true; // simplified for this build
+  const { display, history, appendToDisplay, calculate, clearDisplay, deleteLast, memoryAdd, memoryRecall, memoryClear } = useScientificCalculator();
 
   const classes = {
     display: 'w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white',
@@ -115,7 +148,7 @@ export default function ScientificCalculatorPage() {
         </nav>
 
         <div className="mb-8">
-          <div className="card">
+          <div className={classes.card}>
             <div className="p-4">
               <h3 className="text-lg font-medium text-gray-900 mb-2">Calculator</h3>
               <p className="text-lg text-gray-600">

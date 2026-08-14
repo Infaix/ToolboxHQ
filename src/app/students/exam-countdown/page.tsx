@@ -1,9 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
-import { useContext } from 'react';
 import Link from 'next/link';
-import { useTheme } from '@/contexts/ThemeContext';
 
 interface Exam {
   id: string;
@@ -13,7 +11,6 @@ interface Exam {
 }
 
 export function useExamCountdown() {
-  const { theme } = useTheme();
   const [exams, setExams] = useState<Exam[]>(() => {
     if (typeof window === 'undefined') return [];
     const stored = localStorage.getItem('exam-countdown-exams');
@@ -27,31 +24,37 @@ export function useExamCountdown() {
     return [];
   });
 
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
   useEffect(() => {
     localStorage.setItem('exam-countdown-exams', JSON.stringify(exams));
   }, [exams]);
 
   const sortedExams = useCallback(() => {
     return exams
-      .filter((e) => new Date(e.date) > new Date())
+      .filter((e) => new Date(e.date).getTime() > now)
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }, [exams]);
+  }, [exams, now]);
 
   const formatCountdown = useCallback((dateString: string) => {
     const target = new Date(dateString);
-    const now = new Date();
-    const diff = target.getTime() - now.getTime();
-    
+    const diff = target.getTime() - now;
+
     if (diff <= 0) return 'Exam today!';
-    
+
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
     const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    
+
     if (days > 0) return `${days}d ${hours}h ${minutes}m`;
     if (hours > 0) return `${hours}h ${minutes}m`;
     return `${minutes}m`;
-  }, []);
+  }, [now]);
 
   const addExam = useCallback((name: string, subject: string, date: string) => {
     setExams(prev => [...prev, { id: Date.now().toString(), name, subject, date }]);
@@ -73,7 +76,6 @@ export function useExamCountdown() {
 
 export default function ExamCountdownPage() {
   const { sortedExams, formatCountdown, addExam, removeExam } = useExamCountdown();
-  const isDark = true; // simplified for this build
 
   const [examName, setExamName] = useState('');
   const [examSubject, setExamSubject] = useState('');
@@ -187,9 +189,9 @@ export default function ExamCountdownPage() {
             <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
               Upcoming Exams
             </h2>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               {sortedExams().map((exam) => (
-                <div key={exam.id} className="card p-4">
+                <div key={exam.id} className={`${classes.card} p-4`}>
                   <div className="flex justify-between items-start">
                     <div>
                       <h3 className="font-medium text-gray-900 dark:text-white">{exam.name}</h3>
@@ -204,7 +206,7 @@ export default function ExamCountdownPage() {
                   <button
                     type="button"
                     onClick={() => removeExam(exam.id)}
-                    className="ghostButton text-red-500 dark:text-red-400 text-sm mt-2"
+                    className={`${classes.ghostButton} text-red-500 dark:text-red-400 text-sm mt-2`}
                     aria-label="Remove exam"
                   >
                     Remove

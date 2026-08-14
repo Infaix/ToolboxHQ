@@ -1,9 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
-import { useContext } from 'react';
 import Link from 'next/link';
-import { useTheme } from '@/contexts/ThemeContext';
 
 interface StudyEntry {
   id: string;
@@ -13,7 +11,6 @@ interface StudyEntry {
 }
 
 export function useStudyScoreCalculator() {
-  const { theme } = useTheme();
   const [subjects, setSubjects] = useState<StudyEntry[]>(() => {
     if (typeof window === 'undefined') return [];
     const stored = localStorage.getItem('study-score-calculator-subjects');
@@ -42,7 +39,7 @@ export function useStudyScoreCalculator() {
   const estimatedStudyScore = useCallback(() => {
     if (totalWeight() === 0) return 0;
     return totalWeightedScore() / totalWeight();
-  }, [subjects]);
+  }, [totalWeight, totalWeightedScore]);
 
   const addSubject = useCallback(() => {
     const newSubject: StudyEntry = {
@@ -93,8 +90,6 @@ export function useStudyScoreCalculator() {
 export default function StudyScoreCalculatorPage() {
   const {
     subjects,
-    setSubjects,
-    totalWeightedScore,
     totalWeight,
     estimatedStudyScore,
     addSubject,
@@ -103,7 +98,6 @@ export default function StudyScoreCalculatorPage() {
     handleScoreChange,
     handleWeightChange,
   } = useStudyScoreCalculator();
-  const isDark = true; // simplified for this build
 
   const classes = {
     input: `w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white`,
@@ -157,7 +151,7 @@ export default function StudyScoreCalculatorPage() {
           )}
 
           {subjects.map((subject) => (
-            <div key={subject.id} className="card mb-3">
+            <div key={subject.id} className={`${classes.card} mb-3`}>
               <div className="flex flex-col sm:flex-row gap-2">
                 <div className="flex-1 min-w-0">
                   <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
@@ -166,9 +160,7 @@ export default function StudyScoreCalculatorPage() {
                   <input
                     value={subject.name}
                     onChange={(e) => handleNameChange(subject.id, e.target.value)}
-                    defaultValue={subject.name}
                     className={classes.input}
-                    disabled={true}
                     aria-label="Subject name"
                   />
                 </div>
@@ -181,10 +173,9 @@ export default function StudyScoreCalculatorPage() {
                     value={subject.weight}
                     onChange={(e) => handleWeightChange(subject.id, Number(e.target.value))}
                     min={1}
-                    max={50}
+                    max={100}
                     step={1}
                     className={classes.input}
-                    disabled={true}
                     aria-label="Weight"
                   />%
                 </div>
@@ -203,14 +194,13 @@ export default function StudyScoreCalculatorPage() {
                     max={50}
                     step={1}
                     className={classes.input}
-                    disabled={true}
                     aria-label="Study score (0-50)"
                   />
                 </div>
                 <button
                   type="button"
                   onClick={() => removeSubject(subject.id)}
-                  className="ghostButton ml-2 sm:mt-0"
+                  className={`${classes.ghostButton} ml-2 sm:mt-0`}
                   aria-label="Remove subject"
                 >
                   Remove
@@ -231,12 +221,12 @@ export default function StudyScoreCalculatorPage() {
           )}
 
           {subjects.length > 0 && (
-            <div className="resultCard">
-              <h3 className="title">Estimated Study Score</h3>
-              <p className="subtitle">
+            <div className={classes.resultCard}>
+              <h3 className={classes.title}>Estimated Study Score</h3>
+              <p className={classes.subtitle}>
                 Weighted average: <strong>{estimatedStudyScore().toFixed(1)}</strong>
               </p>
-              <p className="mt-2 subtitle">
+              <p className={`mt-2 ${classes.subtitle}`}>
                 Total weight: {totalWeight()}%{' '}
                 {totalWeight() === 100 ? (' (Complete)') : (
                   <span className="text-blue-600">
@@ -244,8 +234,8 @@ export default function StudyScoreCalculatorPage() {
                   </span>
                 )}
               </p>
-              <div className="warning mt-4">
-                <strong>Important:</strong> This is an <em>estimate only</em>. VCAA's actual study-score calculation is more complex and depends on moderation, scaling, and individual assessment results. This calculator uses weighted averages of raw scores and does not account for all VCAA processes.
+              <div className={`${classes.warning} mt-4`}>
+                <strong>Important:</strong> This is an <em>estimate only</em>. VCAA&apos;s actual study-score calculation is more complex and depends on moderation, scaling, and individual assessment results. This calculator uses weighted averages of raw scores and does not account for all VCAA processes.
               </div>
             </div>
           )}

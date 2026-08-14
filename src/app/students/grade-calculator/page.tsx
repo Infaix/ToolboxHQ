@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { useTheme } from '@/contexts/ThemeContext';
 
 interface Assessment {
   id: string;
@@ -42,11 +41,11 @@ export function useGradeCalculator() {
     const weightSum = totalWeight();
     if (weightSum === 0 || weightSum > 100) return 0;
     return (weightedTotal() / weightSum) * 100;
-  }, [assessments]);
+  }, [totalWeight, weightedTotal]);
 
   const canCalculate = useCallback(() => {
     return assessments.length > 0 && totalWeight() > 0 && totalWeight() <= 100;
-  }, [assessments]);
+  }, [assessments.length, totalWeight]);
 
   const addAssessment = useCallback(() => {
     const newAssessment: Assessment = {
@@ -104,13 +103,9 @@ export function useGradeCalculator() {
 }
 
 export default function GradeCalculatorPage() {
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
   const {
     assessments,
-    setAssessments,
     totalWeight,
-    weightedTotal,
     overallPercentage,
     canCalculate,
     addAssessment,
@@ -167,9 +162,7 @@ export default function GradeCalculatorPage() {
                     <input
                       value={assessment.name}
                       onChange={(e) => handleNameChange(assessment.id, e.target.value)}
-                      defaultValue={assessment.name}
                       className="w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-                      disabled={!canCalculate()}
                       aria-label="Assessment name"
                     />
                   </div>
@@ -185,7 +178,6 @@ export default function GradeCalculatorPage() {
                       max={assessment.maxMark}
                       step={1}
                       className="w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-                      disabled={!canCalculate()}
                       aria-label="Mark achieved"
                     />
                   </div>
@@ -200,7 +192,6 @@ export default function GradeCalculatorPage() {
                       min={1}
                       step={1}
                       className="w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-                      disabled={!canCalculate()}
                       aria-label="Maximum mark"
                     />
                   </div>
@@ -216,14 +207,13 @@ export default function GradeCalculatorPage() {
                       max={100}
                       step={1}
                       className="w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-                      disabled={!canCalculate()}
                       aria-label="Weight percentage"
                     />%
                   </div>
                   <button
                     type="button"
                     onClick={() => removeAssessment(assessment.id)}
-                    className="ml-2 bg-gray-200 dark:bg-gray-700 text-sm font-medium text-gray-800 dark:text-gray-300 rounded px-2 py-1 transition-colors hover:bg-gray-300 dark:hover:bg-gray-600 ml-2"
+                    className="ml-2 bg-gray-200 dark:bg-gray-700 text-sm font-medium text-gray-800 dark:text-gray-300 rounded px-2 py-1 transition-colors hover:bg-gray-300 dark:hover:bg-gray-600"
                     aria-label="Remove assessment"
                     disabled={assessments.length <= 1}
                   >

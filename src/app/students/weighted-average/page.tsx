@@ -1,9 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
-import { useContext } from 'react';
 import Link from 'next/link';
-import { useTheme } from '@/contexts/ThemeContext';
 
 interface WeightedEntry {
   id: string;
@@ -12,7 +10,6 @@ interface WeightedEntry {
 }
 
 export function useWeightedAverage() {
-  const { theme } = useTheme();
   const [entries, setEntries] = useState<WeightedEntry[]>(() => {
     if (typeof window === 'undefined') return [];
     const stored = localStorage.getItem('weighted-average-entries');
@@ -41,7 +38,7 @@ export function useWeightedAverage() {
   const average = useCallback(() => {
     if (totalWeight() === 0) return 0;
     return weightedSum() / totalWeight();
-  }, [entries]);
+  }, [totalWeight, weightedSum]);
 
   const addEntry = useCallback(() => {
     const newEntry: WeightedEntry = {
@@ -82,14 +79,9 @@ export function useWeightedAverage() {
 }
 
 export default function WeightedAveragePage() {
-  const { theme } = useTheme();
-  const isDark = true; // simplified for this build
-
   const {
     entries,
-    setEntries,
     totalWeight,
-    weightedSum,
     average,
     addEntry,
     removeEntry,
@@ -150,7 +142,7 @@ export default function WeightedAveragePage() {
           )}
 
           {entries.map((entry) => (
-            <div key={entry.id} className="card mb-3">
+            <div key={entry.id} className={`${classes.card} mb-3`}>
               <div className="flex flex-col sm:flex-row gap-2">
                 <div className="flex-1 min-w-0">
                   <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
@@ -181,7 +173,7 @@ export default function WeightedAveragePage() {
                 <button
                   type="button"
                   onClick={() => removeEntry(entry.id)}
-                  className="ghostButton ml-2 sm:mt-0"
+                  className={`${classes.ghostButton} ml-2 sm:mt-0`}
                   aria-label="Remove entry"
                 >
                   Remove
@@ -202,18 +194,13 @@ export default function WeightedAveragePage() {
           )}
 
           {totalWeight() > 0 && (
-            <div className="resultCard">
-              <h3 className="title">Weighted Average Result</h3>
-              <p className="subtitle">
+            <div className={classes.resultCard}>
+              <h3 className={classes.title}>Weighted Average Result</h3>
+              <p className={classes.subtitle}>
                 Weighted average: <strong>{average().toFixed(2)}</strong>
               </p>
-              <p className="mt-2 subtitle">
-                Total weight: {totalWeight()}{' '}
-                {totalWeight() > 0 ? (
-                  'out of ' + totalWeight() + '%'
-                ) : (
-                  ''
-                )}
+              <p className={`mt-2 ${classes.subtitle}`}>
+                Total weight: {totalWeight()} out of {totalWeight()}%
               </p>
             </div>
           )}

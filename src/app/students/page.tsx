@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: 'Student Tools - ToolboxHQ',
@@ -186,7 +187,7 @@ export default function StudentToolsPage() {
           <h2 className="text-xl font-medium text-gray-900 dark:text-white mb-4">Your ATAR & Study Tools</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {prominentTools.map((tool) => (
-              <a
+              <Link
                 key={tool.path}
                 href={tool.path}
                 className="group rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-all hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md dark:border-gray-700 dark:bg-gray-800 dark:hover:border-blue-400 cursor-pointer"
@@ -200,7 +201,7 @@ export default function StudentToolsPage() {
                 <p className="mt-2 text-gray-600 dark:text-gray-400 line-clamp-2">
                   {tool.description}
                 </p>
-              </a>
+              </Link>
             ))}
           </div>
         </section>
@@ -210,7 +211,7 @@ export default function StudentToolsPage() {
           <h2 className="text-xl font-medium text-gray-900 dark:text-white mb-4">All Student Tools</h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {otherTools.map((tool) => (
-              <a
+              <Link
                 key={tool.name}
                 href={tool.path}
                 className="group rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md dark:border-gray-700 dark:bg-gray-800 dark:hover:border-blue-400 cursor-pointer"
@@ -224,7 +225,7 @@ export default function StudentToolsPage() {
                 <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">
                   {tool.description}
                 </p>
-              </a>
+              </Link>
             ))}
           </div>
         </section>
@@ -233,11 +234,12 @@ export default function StudentToolsPage() {
         <footer className="mt-10 pt-8 border-t border-gray-200 dark:border-gray-700 text-center text-sm text-gray-500 dark:text-gray-400">
           <p>Your student data stays on your device. These tools run entirely in your browser and do not require an account or server.</p>
           <p className="mt-2">
-            <a href="/"
+            <Link
+              href="/"
               className="transition-colors hover:text-gray-700 dark:hover:text-gray-200"
             >
               Back to ToolboxHQ
-            </a>
+            </Link>
           </p>
         </footer>
       </div>
