@@ -1,0 +1,6 @@
+npm notice run toolboxhq@0.1.0 build
+npm notice run next build
+▲ Next.js 16.3.0 (Turbopack)
+✓ Running next.config.ts took 26ms
+
+  Creating an optimized production build ...

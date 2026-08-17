@@ -8,6 +8,7 @@ interface Note {
   title: string;
   content: string;
   subject: string;
+  createdAt: number;
 }
 
 const NOTES_KEY = 'notes-notes';
@@ -22,212 +23,242 @@ function loadNotes(): Note[] {
   }
 }
 
-export function useNotes() {
-  const [notes, setNotes] = useState<Note[]>(loadNotes);
-
-  useEffect(() => {
+function saveNotes(notes: Note[]) {
+  if (typeof window === 'undefined') return;
+  try {
     localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
+  } catch {
+    // storage unavailable
+  }
+}
+
+function generateId(): string {
+  return Date.now().toString(36) + Math.random().toString(36).substring(2);
+}
+
+export default function NotesPage() {
+  const [notes, setNotes] = useState<Note[]>(loadNotes);
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
+  const [subject, setSubject] = useState<string>('General');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<'recent' | 'oldest' | 'title'>('recent');
+
+  // Auto-save: sync notes state to localStorage whenever it changes
+  useEffect(() => {
+    saveNotes(notes);
   }, [notes]);
 
-  const addNote = useCallback((title: string, content: string, subject: string) => {
-    setNotes((prev) => [
-      ...prev,
-      {
-        id: Date.now().toString(),
-        title: title.trim() || 'Untitled',
-        content: content.trim(),
-        subject: subject.trim() || 'General',
-      },
-    ]);
-  }, []);
+  // Filtered and sorted notes
+  const filteredNotes = notes.filter((note) => {
+    const query = searchQuery.toLowerCase();
+    return (
+      note.title.toLowerCase().includes(query) ||
+      note.content.toLowerCase().includes(query) ||
+      note.subject.toLowerCase().includes(query)
+    );
+  });
 
-  const removeNote = useCallback((id: string) => {
-    setNotes((prev) => prev.filter((n) => n.id !== id));
-  }, []);
+  const sortedNotes = filteredNotes.sort((a, b) => {
+    if (sortBy === 'recent') return b.createdAt - a.createdAt;
+    if (sortBy === 'oldest') return a.createdAt - b.createdAt;
+    return a.title.localeCompare(b.title);
+  });
 
-  const editNote = useCallback((id: string, title: string, content: string, subject: string) => {
+  const handleEditNote = useCallback((id: string, newTitle: string, newContent: string, newSubject: string) => {
     setNotes((prev) =>
-      prev.map((n) =>
-        n.id === id
-          ? { ...n, title: title.trim() || 'Untitled', content: content.trim(), subject: subject.trim() || 'General' }
-          : n
+      prev.map((note) =>
+        note.id === id
+          ? { ...note, title: newTitle.trim() || 'Untitled', content: newContent.trim(), subject: newSubject.trim() || 'General' }
+          : note
       )
     );
   }, []);
 
-  return {
-    notes,
-    setNotes,
-    addNote,
-    removeNote,
-    editNote,
-  };
-}
-
-const SUBJECT_OPTIONS = ['Maths', 'Physics', 'Chemistry', 'English', 'Other'];
-
-export default function NotesPage() {
-  const { notes, addNote, removeNote, editNote } = useNotes();
-
-  const [title, setTitle] = useState('');
-  const [subject, setSubject] = useState('');
-  const [content, setContent] = useState('');
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [formError, setFormError] = useState('');
-
-  const classes = {
-    input:
-      'w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white',
-    button:
-      'inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-blue-700',
-    ghostButton:
-      'inline-flex items-center justify-center rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800',
-    card: 'rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800',
-    title: 'text-xl font-bold text-gray-900 dark:text-white',
-  };
-
-  const resetForm = () => {
-    setTitle('');
-    setSubject('');
-    setContent('');
-    setEditingId(null);
-    setFormError('');
-  };
-
-  const handleSubmit = () => {
-    if (!title.trim()) {
-      setFormError('Please enter a note title.');
-      return;
+  const handleAddNote = useCallback(() => {
+    if (!title.trim() && !content.trim()) {
+      return; // Don't create empty notes
     }
+
     if (editingId) {
-      editNote(editingId, title, content, subject);
+      // Update existing note
+      handleEditNote(editingId, title, content, subject);
+      setEditingId(null);
     } else {
-      addNote(title, content, subject);
+      // Create new note
+      setNotes((prev) => [
+        {
+          id: generateId(),
+          title: title.trim() || 'Untitled',
+          content: content.trim(),
+          subject: subject || 'General',
+          createdAt: Date.now(),
+        },
+        ...prev,
+      ]);
     }
-    resetForm();
-  };
+    setTitle('');
+    setContent('');
+    setSubject('General');
+  }, [title, content, subject, editingId, handleEditNote]);
 
-  const handleEdit = (note: Note) => {
+  const handleRemoveNote = useCallback((id: string) => {
+    setNotes((prev) => prev.filter((note) => note.id !== id));
+  }, []);
+
+  const startEditing = useCallback((note: Note) => {
     setEditingId(note.id);
     setTitle(note.title);
-    setSubject(note.subject);
     setContent(note.content);
-    setFormError('');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+    setSubject(note.subject);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <nav className="mb-8 border-b border-gray-200 pb-4 dark:border-gray-700">
+        <nav className="mb-8 border-b border-gray-200 dark:border-gray-700 pb-4">
           <Link
             href="/students"
-            className="inline-flex items-center gap-1 text-sm text-gray-500 transition hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            className="inline-flex items-center gap-1 text-sm text-gray-500 transition hover:text-gray-700 dark:hover:text-gray-200"
           >
             <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
               <path d="M15 18l-6-6 6-6" />
             </svg>
             Student Tools Hub
           </Link>
-          <h1 className="mt-4 text-3xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl">
-            Notes
-          </h1>
+          <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl">
+              Notes
+            </h1>
+            <div className="flex items-center gap-2">
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search notes..."
+                className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+              />
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as 'recent' | 'oldest' | 'title')}
+                className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+              >
+                <option value="recent">Recent</option>
+                <option value="oldest">Oldest</option>
+                <option value="title">Title</option>
+              </select>
+            </div>
+          </div>
         </nav>
 
-        <div className={classes.card}>
-          <h2 className={`${classes.title} mb-4`}>
-            {editingId ? 'Edit Note' : 'Add Note'}
-          </h2>
+        {/* Quick Note Input */}
+        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800 mb-8">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-600 dark:text-gray-400" htmlFor="note-title">
-                Note Title
+              <label className="mb-1 block text-sm font-medium text-gray-600 dark:text-gray-400">
+                Title
               </label>
               <input
-                id="note-title"
-                type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g. Lecture Notes - Week 3"
-                className={classes.input}
+                placeholder="Note title..."
+                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-600 dark:text-gray-400" htmlFor="note-subject">
+              <label className="mb-1 block text-sm font-medium text-gray-600 dark:text-gray-400">
                 Subject
               </label>
               <select
-                id="note-subject"
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
-                className={classes.input}
+                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
               >
-                <option value="">Select subject</option>
-                {SUBJECT_OPTIONS.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
+                <option value="General">General</option>
+                <option value="Mathematical Methods">Mathematical Methods</option>
+                <option value="Physics">Physics</option>
+                <option value="English Language">English Language</option>
+                <option value="Vietnamese">Vietnamese</option>
+                <option value="Chemistry">Chemistry</option>
+                <option value="Biology">Biology</option>
+                <option value="Other">Other</option>
               </select>
             </div>
           </div>
           <div className="mt-4">
-            <label className="mb-1 block text-sm font-medium text-gray-600 dark:text-gray-400" htmlFor="note-content">
+            <label className="mb-1 block text-sm font-medium text-gray-600 dark:text-gray-400">
               Content
             </label>
             <textarea
-              id="note-content"
               value={content}
               onChange={(e) => setContent(e.target.value)}
               rows={4}
-              placeholder="Write your notes here..."
-              className={classes.input}
+              placeholder="Write your note here..."
+              className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
             />
           </div>
-
-          {formError && <p className="mt-4 text-sm text-red-600 dark:text-red-400">{formError}</p>}
-
-          <div className="mt-6 flex justify-end gap-2">
+          <div className="mt-4 flex justify-end">
+            <button
+              type="button"
+              onClick={handleAddNote}
+              className="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-blue-700"
+            >
+              {editingId ? 'Update Note' : 'Save Note'}
+            </button>
             {editingId && (
-              <button type="button" onClick={resetForm} className={classes.ghostButton}>
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingId(null);
+                  setTitle('');
+                  setContent('');
+                  setSubject('General');
+                }}
+                className="ml-2 inline-flex items-center justify-center rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
+              >
                 Cancel
               </button>
             )}
-            <button type="button" onClick={handleSubmit} className={classes.button} aria-label={editingId ? 'Save note' : 'Add note'}>
-              {editingId ? 'Save Changes' : 'Add Note'}
-            </button>
           </div>
         </div>
 
-        {notes.length > 0 && (
-          <div className="mt-8 space-y-4">
-            <h2 className="text-lg font-medium text-gray-900 dark:text-white">
-              Your Notes ({notes.length})
-            </h2>
-            {notes.map((note) => (
-              <div key={note.id} className={classes.card}>
-                <div className="flex flex-col gap-2">
-                  <div className="flex items-start justify-between gap-3">
+        {/* Notes list */}
+        {sortedNotes.length > 0 ? (
+          <div className="space-y-4">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              {sortedNotes.length} note{sortedNotes.length !== 1 ? 's' : ''}
+            </p>
+            {sortedNotes.map((note) => (
+              <div
+                key={note.id}
+                className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/50 dark:text-blue-200">
+                        {note.subject}
+                      </span>
+                      <span className="text-xs text-gray-400 dark:text-gray-500">
+                        {new Date(note.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
                     <h3 className="font-medium text-gray-900 dark:text-white">{note.title}</h3>
-                    <span className="shrink-0 rounded-md bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300">
-                      {note.subject}
-                    </span>
+                    <p className="mt-2 text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{note.content}</p>
                   </div>
-                  <p className="whitespace-pre-wrap text-sm text-gray-600 dark:text-gray-400">{note.content}</p>
                   <div className="flex gap-2">
                     <button
                       type="button"
-                      onClick={() => handleEdit(note)}
-                      className={classes.ghostButton}
-                      aria-label="Edit note"
+                      onClick={() => startEditing(note)}
+                      className="text-blue-600 hover:text-blue-800 dark:text-blue-300 dark:hover:text-blue-400 text-sm"
                     >
                       Edit
                     </button>
                     <button
                       type="button"
-                      onClick={() => removeNote(note.id)}
-                      className="rounded-md border border-red-300 px-3 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900/20"
-                      aria-label="Delete note"
+                      onClick={() => handleRemoveNote(note.id)}
+                      className="text-red-600 hover:text-red-800 dark:text-red-300 text-sm"
                     >
                       Delete
                     </button>
@@ -236,12 +267,10 @@ export default function NotesPage() {
               </div>
             ))}
           </div>
-        )}
-
-        {notes.length === 0 && (
-          <p className="mt-8 text-center text-sm text-gray-500 dark:text-gray-400">
-            No notes yet. Add a note above to get started.
-          </p>
+        ) : (
+          <div className="text-center text-sm text-gray-500 dark:text-gray-400 py-12">
+            <p>No notes yet. Write your first note above.</p>
+          </div>
         )}
       </div>
     </div>

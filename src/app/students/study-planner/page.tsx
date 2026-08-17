@@ -109,6 +109,16 @@ const PRIORITY_LABELS: Record<Task['priority'], string> = {
   high: 'High',
 };
 
+function durationMin(dueDate: string): number {
+  // Parse due date to calculate minutes until due, capped at a reasonable study session
+  if (!dueDate) return 25;
+  const due = new Date(dueDate).getTime();
+  const now = new Date().getTime();
+  const diffMin = Math.max(0, Math.ceil((due - now) / 60000));
+  // Cap at 120 minutes and floor at 25
+  return Math.min(120, Math.max(25, diffMin));
+}
+
 export default function StudyPlannerPage() {
   const { subjects, upcomingTasks, completedTasks, addTask, toggleTask, removeTask } = useStudyPlanner();
 
@@ -117,6 +127,7 @@ export default function StudyPlannerPage() {
   const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('medium');
   const [dueDate, setDueDate] = useState('');
   const [formError, setFormError] = useState('');
+  const [startTimer, setStartTimer] = useState(false);
 
   const classes = {
     input:
@@ -137,7 +148,7 @@ export default function StudyPlannerPage() {
     high: 'text-red-600 dark:text-red-300',
   };
 
-  const handleAddTask = () => {
+const handleAddTask = () => {
     if (!title.trim()) {
       setFormError('Please enter a task title.');
       return;
@@ -152,6 +163,7 @@ export default function StudyPlannerPage() {
     setPriority('medium');
     setDueDate('');
     setFormError('');
+    setStartTimer(false);
   };
 
   const upcoming = upcomingTasks();
@@ -241,9 +253,67 @@ export default function StudyPlannerPage() {
 
           {formError && <p className="mt-4 text-sm text-red-600 dark:text-red-400">{formError}</p>}
 
+          {startTimer && (
+            <div className="mt-4 rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+              <h3 className="text-semibold text-gray-900 dark:text-white mb-4">Start Study Session</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Start a focused study session with your task pre-configured?
+              </p>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 mb-4">
+                <div>
+                  <p className="font-medium text-gray-600 dark:text-gray-400">Subject</p>
+                  <p className="font-bold text-gray-900 dark:text-white">{subject || 'General'}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-gray-600 dark:text-gray-400">Task</p>
+                  <p className="font-bold text-gray-900 dark:text-white">{title || 'Study session'}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-gray-600 dark:text-gray-400">Duration</p>
+                  <p className="font-bold text-gray-900 dark:text-white">{durationMin(dueDate)} min</p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setStartTimer(false)}
+                  className="ghostButton flex-1"
+                  aria-label="Cancel"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStartTimer(false);
+                    // Save task config to localStorage for the timer to read
+                    const taskConfig = {
+                      subject: subject.trim() || 'General',
+                      task: title.trim() || 'Study session',
+                      durationMin: durationMin(dueDate),
+                    };
+                    if (typeof window !== 'undefined') {
+                      try {
+                        localStorage.setItem('study-planner-task-config', JSON.stringify(taskConfig));
+                        // Navigate to study timer
+                        window.location.href = '/students/study-timer';
+                      } catch {
+                        // ignored
+                      }
+                    }
+                  }}
+                  className="button flex-1"
+                  aria-label="Start study session"
+                >
+                  Start Session
+                </button>
+              </div>
+            </div>
+          )}
+
           <div className="mt-6 flex justify-end">
-            <button type="button" onClick={handleAddTask} className={classes.button} aria-label="Add task">
-              Add Task
+            <button type="button" onClick={() => setStartTimer(true)} className={classes.button} aria-label="Add task and start timer">
+              Add Task & Start Timer
             </button>
           </div>
         </div>

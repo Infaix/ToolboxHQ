@@ -12,6 +12,7 @@ interface QuizQuestion {
 }
 
 interface QuizState {
+  metadata: QuizMetadata;
   questions: QuizQuestion[];
   currentQuestionIndex: number;
   score: number;
@@ -24,9 +25,16 @@ interface LastAnswer {
   correct: boolean;
 }
 
+interface QuizMetadata {
+  subject: string;
+  topic: string;
+  difficulty: 'easy' | 'medium' | 'hard';
+}
+
 const QUIZ_KEY = 'quiz-maker-quiz';
 
 const EMPTY_QUIZ: QuizState = {
+  metadata: { subject: '', topic: '', difficulty: 'medium' },
   questions: [],
   currentQuestionIndex: 0,
   score: 0,
@@ -56,7 +64,7 @@ export function useQuizMaker() {
   }, [quizState]);
 
   const addQuestion = useCallback(
-    (question: string, options: string[], correctAnswerIndex: number, explanation: string) => {
+    (question: string, options: string[], correctAnswerIndex: number, explanation: string, metadata?: QuizMetadata) => {
       const newQuestion: QuizQuestion = {
         id: Date.now().toString(),
         question,
@@ -65,6 +73,7 @@ export function useQuizMaker() {
         explanation,
       };
       setQuizState((prev) => ({
+        metadata: metadata || prev.metadata,
         questions: [...prev.questions, newQuestion],
         currentQuestionIndex: prev.questions.length,
         score: prev.score,
@@ -155,6 +164,10 @@ export default function QuizMakerPage() {
   const [correctIndex, setCorrectIndex] = useState(0);
   const [explanation, setExplanation] = useState('');
   const [formError, setFormError] = useState('');
+  const [showSubject, setShowSubject] = useState(false);
+  const [subject, setSubject] = useState<string>('');
+  const [topic, setTopic] = useState<string>('');
+  const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
 
   const classes = {
     input:
@@ -186,7 +199,12 @@ export default function QuizMakerPage() {
       setFormError('The correct answer must point to one of the filled options.');
       return;
     }
-    addQuestion(question.trim(), options, correctIndex, explanation.trim());
+    const metadata: QuizMetadata = {
+      subject: subject || 'General',
+      topic: topic || 'General',
+      difficulty: difficulty,
+    };
+    addQuestion(question.trim(), options, correctIndex, explanation.trim(), metadata);
     setQuestion('');
     setOptionA('');
     setOptionB('');
@@ -226,6 +244,113 @@ export default function QuizMakerPage() {
             )}
           </div>
         </nav>
+
+        {/* Subject/Topic selection header */}
+        {quizState.questions.length === 0 && (
+          <div className="mb-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+            <h2 className="text-font-medium text-gray-900 dark:text-white mb-4">Create Quiz</h2>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
+                  Subject
+                </label>
+                <select
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
+                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                  aria-label="Subject"
+                >
+                  <option value="">Select subject</option>
+                  <option value="Mathematical Methods">Mathematical Methods</option>
+                  <option value="Physics">Physics</option>
+                  <option value="English Language">English Language</option>
+                  <option value="Chemistry">Chemistry</option>
+                  <option value="Biology">Biology</option>
+                  <option value="Specialist Maths">Specialist Maths</option>
+                  <option value="Further Maths">Further Maths</option>
+                  <option value="General">General</option>
+                </select>
+                <button
+                  type="button"
+                  onClick={() => setShowSubject(true)}
+                  className="mt-2 ghostButton text-xs"
+                  aria-label="Add custom subject"
+                >
+                  + Add custom
+                </button>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
+                  Topic
+                </label>
+                <select
+                  value={topic}
+                  onChange={(e) => setTopic(e.target.value)}
+                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                  aria-label="Topic"
+                >
+                  <option value="">Select topic</option>
+                  <option value="Algebra">Algebra</option>
+                  <option value="Calculus">Calculus</option>
+                  <option value="Vectors">Vectors</option>
+                  <option value="Motion">Motion</option>
+                  <option value="Electricity">Electricity</option>
+                  <option value="Waves">Waves</option>
+                  <option value="Probability">Probability</option>
+                  <option value="Statistics">Statistics</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
+                  Difficulty
+                </label>
+                <select
+                  value={difficulty}
+                  onChange={(e) => setDifficulty(e.target.value as 'easy' | 'medium' | 'hard')}
+                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                  aria-label="Difficulty"
+                >
+                  <option value="medium">Medium</option>
+                  <option value="easy">Easy</option>
+                  <option value="hard">Hard</option>
+                </select>
+              </div>
+            </div>
+            {showSubject && (
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
+                  Custom Subject
+                </label>
+                <input
+                  type="text"
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
+                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                  aria-label="Custom subject name"
+                />
+                <div className="mt-2 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => { setSubject(''); setShowSubject(false); }}
+                    className="ghostButton"
+                    aria-label="Cancel"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setShowSubject(false); }}
+                    className="button"
+                    aria-label="Save subject"
+                  >
+                    Save
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {quizState.questions.length === 0 ? (
           <div className={classes.card}>
@@ -379,26 +504,26 @@ export default function QuizMakerPage() {
                     );
                   })}
                 </div>
-
-                {lastAnswer && (
-                  <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
-                    <p className={`text-sm font-medium ${lastAnswer.correct ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
-                      {lastAnswer.correct ? 'Correct!' : `Incorrect. The answer was ${String.fromCharCode(65 + currentQuestion.correctAnswerIndex)}.`}
-                    </p>
-                    {currentQuestion.explanation && (
-                      <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">{currentQuestion.explanation}</p>
-                    )}
-                  </div>
-                )}
-
-                {lastAnswer && quizState.currentQuestionIndex < quizState.questions.length - 1 && (
-                  <div className="mt-6 flex justify-end">
-                    <button type="button" onClick={nextQuestion} className={classes.button} aria-label="Next question">
-                      Next Question →
-                    </button>
-                  </div>
-                )}
               </div>
+
+              {lastAnswer && (
+                <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
+                  <p className={`text-sm font-medium ${lastAnswer.correct ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                    {lastAnswer.correct ? 'Correct!' : `Incorrect. The answer was ${String.fromCharCode(65 + currentQuestion.correctAnswerIndex)}.`}
+                  </p>
+                  {currentQuestion.explanation && (
+                    <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">{currentQuestion.explanation}</p>
+                  )}
+                </div>
+              )}
+
+              {lastAnswer && quizState.currentQuestionIndex < quizState.questions.length - 1 && (
+                <div className="mt-6 flex justify-end">
+                  <button type="button" onClick={nextQuestion} className={classes.button} aria-label="Next question">
+                    Next Question →
+                  </button>
+                </div>
+              )}
             </div>
           )
         )}

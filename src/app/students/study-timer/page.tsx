@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 
-type TimerMode = 'focus' | 'shortBreak' | 'longBreak';
+type TimerMode = 'focus' | 'shortBreak' | 'longBreak' | 'exam' | 'custom';
 
 interface TimerSettings {
   focusMin: number;
@@ -12,23 +12,34 @@ interface TimerSettings {
   sessionsBeforeLongBreak: number;
   autoStartNext: boolean;
   soundEnabled: boolean;
-  notificationsEnabled: boolean;
+  customMin: number;
+  customBreakMin: number;
 }
 
-interface DailyStats {
+interface TimerSession {
+  id: string;
+  date: string;
+  mode: TimerMode;
+  subject: string;
+  task: string;
+  durationSec: number;
+  completed: boolean;
+  startedAt: number | null;
+  completedAt: number | null;
+}
+
+interface DailySessionStats {
   date: string;
   sessionsCompleted: number;
   focusSeconds: number;
 }
 
-interface BannerMessage {
-  title: string;
-  body: string;
-}
-
 const SETTINGS_KEY = 'study-timer-settings';
+const SESSIONS_KEY = 'study-timer-sessions';
 const STATS_KEY = 'study-timer-stats';
 const CYCLE_KEY = 'study-timer-cycle';
+const SUBJECTS_KEY = 'study-timer-subjects';
+const FULLSCREEN_KEY = 'study-timer-fullscreen';
 
 const DEFAULT_SETTINGS: TimerSettings = {
   focusMin: 25,
@@ -37,13 +48,23 @@ const DEFAULT_SETTINGS: TimerSettings = {
   sessionsBeforeLongBreak: 4,
   autoStartNext: false,
   soundEnabled: true,
-  notificationsEnabled: false,
+  customMin: 25,
+  customBreakMin: 5,
 };
 
 const MODE_LABELS: Record<TimerMode, string> = {
   focus: 'Focus',
   shortBreak: 'Short Break',
   longBreak: 'Long Break',
+  exam: 'Exam Mode',
+  custom: 'Custom',
+};
+
+const PRESET_MODES = {
+  pomodoro: { focusMin: 25, breakMin: 5, mode: 'focus' as TimerMode },
+  shortStudy: { focusMin: 45, breakMin: 10, mode: 'focus' as TimerMode },
+  deepWork: { focusMin: 50, breakMin: 10, mode: 'focus' as TimerMode },
+  exam: { focusMin: 90, breakMin: 0, mode: 'exam' as TimerMode },
 };
 
 function todayKey(): string {
@@ -56,7 +77,9 @@ function todayKey(): string {
 function getDurationSec(mode: TimerMode, settings: TimerSettings): number {
   if (mode === 'focus') return settings.focusMin * 60;
   if (mode === 'shortBreak') return settings.shortBreakMin * 60;
-  return settings.longBreakMin * 60;
+  if (mode === 'longBreak') return settings.longBreakMin * 60;
+  if (mode === 'exam') return settings.focusMin * 60;
+  return settings.customMin * 60;
 }
 
 function formatTime(totalSeconds: number): string {
@@ -78,13 +101,22 @@ function loadSettings(): TimerSettings {
   }
 }
 
-function loadStats(): DailyStats {
-  const empty: DailyStats = { date: todayKey(), sessionsCompleted: 0, focusSeconds: 0 };
+function saveSettings(settings: TimerSettings) {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  } catch {
+    // storage unavailable
+  }
+}
+
+function loadStats(): DailySessionStats {
+  const empty: DailySessionStats = { date: todayKey(), sessionsCompleted: 0, focusSeconds: 0 };
   if (typeof window === 'undefined') return empty;
   try {
     const raw = localStorage.getItem(STATS_KEY);
     if (!raw) return empty;
-    const parsed = JSON.parse(raw) as Partial<DailyStats>;
+    const parsed = JSON.parse(raw) as Partial<DailySessionStats>;
     if (parsed.date !== todayKey()) return empty;
     return {
       date: todayKey(),
@@ -93,6 +125,34 @@ function loadStats(): DailyStats {
     };
   } catch {
     return empty;
+  }
+}
+
+function saveStats(stats: DailySessionStats) {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(STATS_KEY, JSON.stringify(stats));
+  } catch {
+    // storage unavailable
+  }
+}
+
+function loadSessions(): TimerSession[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const stored = localStorage.getItem(SESSIONS_KEY);
+    return stored ? JSON.parse(stored) as TimerSession[] : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveSessions(sessions: TimerSession[]) {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions));
+  } catch {
+    // storage unavailable
   }
 }
 
@@ -107,538 +167,607 @@ function loadCycleCount(): number {
   }
 }
 
-export function useStudyTimer() {
-  const [settings, setSettings] = useState<TimerSettings>(loadSettings);
-  const [mode, setMode] = useState<TimerMode>('focus');
-  const [isRunning, setIsRunning] = useState(false);
-  const [remainingSec, setRemainingSec] = useState(() => getDurationSec('focus', settings));
-  const [stats, setStats] = useState<DailyStats>(loadStats);
-  const [cycleCount, setCycleCount] = useState(loadCycleCount);
-  const [banner, setBanner] = useState<BannerMessage | null>(null);
+function saveCycleCount(count: number) {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(CYCLE_KEY, String(count));
+  } catch {
+    // storage unavailable
+  }
+}
+
+function addSubject(subject: string) {
+  if (typeof window === 'undefined') return;
+  try {
+    const stored = localStorage.getItem(SUBJECTS_KEY);
+    const subjects: string[] = stored ? JSON.parse(stored) : [];
+    const trimmed = subject.trim();
+    if (trimmed && !subjects.includes(trimmed)) {
+      subjects.push(trimmed);
+      localStorage.setItem(SUBJECTS_KEY, JSON.stringify(subjects));
+    }
+  } catch {
+    // storage unavailable
+  }
+}
+
+function getRecentSubjects(): string[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const stored = localStorage.getItem(SUBJECTS_KEY);
+    if (!stored) return [];
+    const subjects = JSON.parse(stored);
+    const seen = new Set();
+    return subjects.filter((s: string) => !seen.has(s) && seen.add(s));
+  } catch {
+    return [];
+  }
+}
+
+// Fullscreen helper
+function useFullscreen() {
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [fullscreenError, setFullscreenError] = useState<string | null>(null);
-  const [showSettings, setShowSettings] = useState(false);
 
-  const endAtRef = useRef<number | null>(null);
+  const enterFullscreen = (element: HTMLElement | null) => {
+    if (!element) return;
+    if (element.requestFullscreen) {
+      element.requestFullscreen().catch(() => {
+        setIsFullscreen(false);
+      });
+    } else if ((element as any).webkitRequestFullscreen) {
+      (element as any).webkitRequestFullscreen.call(element);
+    } else if ((element as any).msRequestFullscreen) {
+      (element as any).msRequestFullscreen.call(element);
+    }
+    setIsFullscreen(true);
+  };
+
+  const exitFullscreen = () => {
+    if ((document as any).exitFullscreen) {
+      ;(document as any).exitFullscreen();
+    } else if ((document as any).webkitExitFullscreen) {
+      ;(document as any).webkitExitFullscreen();
+    } else if ((document as any).msExitFullscreen) {
+      ;(document as any).msExitFullscreen();
+    }
+    setIsFullscreen(false);
+  };
 
   useEffect(() => {
-    try {
-      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-    } catch {
-      // storage unavailable
-    }
-  }, [settings]);
+    const handleChange = () => {
+      const fsElement = document.fullscreenElement || (document as any).webkitFullscreenElement || (document as any).msFullscreenElement;
+      setIsFullscreen(!!fsElement);
+    };
+    ;(document as any).addEventListener('fullscreenchange', handleChange);
+    ;(document as any).addEventListener('webkitfullscreenchange', handleChange);
+    ;(document as any).addEventListener('msfullscreenchange', handleChange);
+    return () => {
+      ;(document as any).removeEventListener('fullscreenchange', handleChange);
+      ;(document as any).removeEventListener('webkitfullscreenchange', handleChange);
+      ;(document as any).removeEventListener('msfullscreenchange', handleChange);
+    };
+  }, []);
 
+  return { isFullscreen, enterFullscreen, exitFullscreen };
+}
+
+export default function StudyTimerPage() {
+  // Settings state
+  const [settings, setSettings] = useState<TimerSettings>(loadSettings);
+  const [stats, setStats] = useState<DailySessionStats>(loadStats);
+  const [sessions, setSessions] = useState<TimerSession[]>(loadSessions);
+  const [cycleCount, setCycleCount] = useState(loadCycleCount);
+  const [recentSubjects, setRecentSubjectsState] = useState(getRecentSubjects);
+
+  // Timer state using timestamp-based counting for accuracy with browser throttling
+  const [mode, setMode] = useState<TimerMode>('focus');
+  const [remainingSec, setRemainingSec] = useState(25 * 60);
+  const [isRunning, setIsRunning] = useState(false);
+  const [subject, setSubject] = useState<string>('');
+  const [task, setTask] = useState<string>('');
+
+  // Load planner config on mount
   useEffect(() => {
+    if (typeof window === 'undefined') return;
     try {
-      localStorage.setItem(STATS_KEY, JSON.stringify(stats));
+      const plannerConfig = localStorage.getItem('study-planner-task-config');
+      if (plannerConfig) {
+        const config = JSON.parse(plannerConfig);
+        if (config.subject) setSubject(config.subject);
+        if (config.task) setTask(config.task);
+        if (config.durationMin) {
+          setSettings((prev) => ({ ...prev, focusMin: config.durationMin }));
+          setRemainingSec(config.durationMin * 60);
+        }
+        // Clear the config after loading
+        localStorage.removeItem('study-planner-task-config');
+      }
     } catch {
-      // storage unavailable
+      // ignored
     }
-  }, [stats]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  useEffect(() => {
-    try {
-      localStorage.setItem(CYCLE_KEY, String(cycleCount));
-    } catch {
-      // storage unavailable
-    }
-  }, [cycleCount]);
+  // Timer refs for timestamp-based counting
+  const startTimeRef = useRef<number | null>(null);
+  const pausedAtRef = useRef<number | null>(null);
+  const totalPausedTimeRef = useRef<number>(0);
 
-  const playChime = useCallback(() => {
-    if (!settings.soundEnabled) return;
-    try {
-      const Ctor =
-        window.AudioContext ??
-        (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-      if (!Ctor) return;
-      const ctx = new Ctor();
-      const notes = [660, 660, 880];
-      notes.forEach((freq, i) => {
+  // Fullscreen state
+  const { isFullscreen, enterFullscreen, exitFullscreen } = useFullscreen();
+
+  // Complete session callback
+  const completeSession = useCallback(() => {
+    setIsRunning(false);
+    setShowCompletion(true);
+
+    // Save completed session
+    const newSession: TimerSession = {
+      id: Date.now().toString(),
+      date: todayKey(),
+      mode,
+      subject: subject || 'General',
+      task: task || 'Study session',
+      durationSec: settings.focusMin * 60,
+      completed: true,
+      startedAt: Date.now() - settings.focusMin * 60 * 1000,
+      completedAt: Date.now(),
+    };
+    setSessions((prev) => [newSession, ...prev.slice(0, 9)]);
+    setRecentSubjectsState((prev) => {
+      const already = new Set(prev);
+      if (!already.has(subject || 'General')) prev.push(subject || 'General');
+      return prev;
+    });
+
+    // Update stats
+    setStats((prev) => ({
+      ...prev,
+      sessionsCompleted: prev.sessionsCompleted + 1,
+      focusSeconds: prev.focusSeconds + (settings.focusMin * 60),
+    }));
+    setCycleCount((prev) => prev + 1);
+
+    // Play chime sound
+    if (settings.soundEnabled) {
+      try {
+        const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
-        const start = ctx.currentTime + i * 0.28;
         osc.type = 'sine';
-        osc.frequency.value = freq;
-        gain.gain.setValueAtTime(0.0001, start);
-        gain.gain.exponentialRampToValueAtTime(0.2, start + 0.03);
-        gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.25);
+        osc.frequency.value = 660;
+        gain.gain.value = 0.1;
         osc.connect(gain).connect(ctx.destination);
-        osc.start(start);
-        osc.stop(start + 0.3);
-      });
-      window.setTimeout(() => {
-        void ctx.close();
-      }, 1500);
-    } catch {
-      // audio unavailable
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.3);
+        setTimeout(() => ctx.close(), 500);
+      } catch {
+        // audio unavailable
+      }
     }
-  }, [settings.soundEnabled]);
 
-  const notify = useCallback(
-    (title: string, body: string) => {
-      if (!settings.notificationsEnabled) return;
-      if (typeof window === 'undefined' || typeof Notification === 'undefined') return;
-      if (Notification.permission === 'granted') {
+    // Show notification
+    if (typeof Notification !== 'undefined') {
+      const permission = (Notification as any).permission;
+      if (permission === 'granted') {
         try {
-          new Notification(title, { body });
+          new Notification('Focus session complete', { body: 'Great work! Time for a break.' });
+        } catch {
+          // notification failed
+        }
+      } else if (permission !== 'denied') {
+        try {
+          (Notification as any).requestPermission().then((perm: string) => {
+            if (perm === 'granted') {
+              new Notification('Focus session complete', { body: 'Great work! Time for a break.' });
+            }
+          });
         } catch {
           // notification failed
         }
       }
-    },
-    [settings.notificationsEnabled]
-  );
-
-  const requestNotificationPermission = useCallback(async () => {
-    if (typeof window === 'undefined' || typeof Notification === 'undefined') return;
-    if (Notification.permission === 'default') {
-      try {
-        await Notification.requestPermission();
-      } catch {
-        // permission request failed
-      }
     }
-  }, []);
+  }, [settings, subject, task]);
 
-  const completeSession = useCallback(() => {
-    setIsRunning(false);
-    if (endAtRef.current !== null) endAtRef.current = null;
-    setRemainingSec(0);
-
-    if (mode === 'focus') {
-      setStats((prev) => ({
-        ...prev,
-        sessionsCompleted: prev.sessionsCompleted + 1,
-        focusSeconds: prev.focusSeconds + settings.focusMin * 60,
-      }));
-      const newCycle = cycleCount + 1;
-      setCycleCount(newCycle);
-      const nextMode: TimerMode =
-        newCycle % settings.sessionsBeforeLongBreak === 0 ? 'longBreak' : 'shortBreak';
-      const nextDuration = getDurationSec(nextMode, settings);
-      setMode(nextMode);
-      setRemainingSec(nextDuration);
-      setBanner({
-        title: 'Focus session complete',
-        body: nextMode === 'longBreak' ? 'Time for a well-earned long break.' : 'Time for a short break.',
-      });
-      playChime();
-      notify(
-        'Focus session complete',
-        nextMode === 'longBreak' ? 'Great work! Time for a long break.' : 'Great work! Time for a short break.'
-      );
-      if (settings.autoStartNext) {
-        endAtRef.current = Date.now() + nextDuration * 1000;
-        setIsRunning(true);
-      }
-    } else {
-      const nextDuration = getDurationSec('focus', settings);
-      setMode('focus');
-      setRemainingSec(nextDuration);
-      setBanner({ title: 'Break finished', body: 'Ready for the next focus session?' });
-      playChime();
-      notify('Break finished', 'Ready for the next focus session?');
-      if (settings.autoStartNext) {
-        endAtRef.current = Date.now() + nextDuration * 1000;
-        setIsRunning(true);
-      }
-    }
-  }, [mode, cycleCount, settings, playChime, notify]);
-
+  // Initialize timer state from settings and mode
   useEffect(() => {
-    if (!isRunning) return;
-    const id = window.setInterval(() => {
-      const endAt = endAtRef.current;
-      if (endAt === null) return;
-      const next = Math.max(0, Math.ceil((endAt - Date.now()) / 1000));
-      if (next === 0) {
+    const duration = getDurationSec(mode, settings);
+    setRemainingSec(duration);
+    startTimeRef.current = null;
+    pausedAtRef.current = null;
+    totalPausedTimeRef.current = 0;
+  }, [mode, settings]);
+
+  // Timer effect - timestamp based for accuracy with browser throttling
+  useEffect(() => {
+    if (!isRunning) {
+      if (startTimeRef.current !== null && pausedAtRef.current === null) {
+        pausedAtRef.current = Date.now();
+      }
+      return;
+    }
+
+    // Starting or resuming
+    if (startTimeRef.current === null) {
+      startTimeRef.current = Date.now();
+      pausedAtRef.current = null;
+      totalPausedTimeRef.current = 0;
+    } else if (pausedAtRef.current !== null) {
+      totalPausedTimeRef.current += (Date.now() - pausedAtRef.current);
+      pausedAtRef.current = null;
+    }
+
+    const interval = setInterval(() => {
+      const now = Date.now();
+      const elapsed = now - (startTimeRef.current || now) - totalPausedTimeRef.current;
+      const totalDuration = getDurationSec(mode, settings) * 1000;
+      const remainingMs = Math.max(0, totalDuration - elapsed);
+      const remainingSec = Math.ceil(remainingMs / 1000);
+
+      setRemainingSec(remainingSec);
+
+      if (remainingSec <= 0) {
+        clearInterval(interval);
+        setIsRunning(false);
         completeSession();
-        return;
       }
-      setRemainingSec(next);
-    }, 250);
-    return () => window.clearInterval(id);
-  }, [isRunning, completeSession]);
+    }, 100); // Update every 100ms for smooth UI
 
-  useEffect(() => {
-    if (!banner) return;
-    const t = window.setTimeout(() => setBanner(null), 6000);
-    return () => window.clearTimeout(t);
-  }, [banner]);
-
-  useEffect(() => {
-    const onChange = () => setIsFullscreen(Boolean(document.fullscreenElement));
-    document.addEventListener('fullscreenchange', onChange);
-    return () => document.removeEventListener('fullscreenchange', onChange);
-  }, []);
-
-  const toggleRun = useCallback(() => {
-    if (isRunning) {
-      if (endAtRef.current !== null) endAtRef.current = null;
-      setIsRunning(false);
-    } else {
-      if (remainingSec === 0) {
-        setRemainingSec(getDurationSec(mode, settings));
-      }
-      endAtRef.current = Date.now() + (remainingSec === 0 ? getDurationSec(mode, settings) : remainingSec) * 1000;
-      setIsRunning(true);
-    }
-  }, [isRunning, remainingSec, mode, settings]);
-
-  const resetTimer = useCallback(() => {
-    setIsRunning(false);
-    if (endAtRef.current !== null) endAtRef.current = null;
-    setRemainingSec(getDurationSec(mode, settings));
-  }, [mode, settings]);
-
-  const skipSession = useCallback(() => {
-    setIsRunning(false);
-    if (endAtRef.current !== null) endAtRef.current = null;
-    const nextMode: TimerMode = mode === 'focus' ? 'shortBreak' : 'focus';
-    setMode(nextMode);
-    setRemainingSec(getDurationSec(nextMode, settings));
-  }, [mode, settings]);
-
-  const switchMode = useCallback(
-    (nextMode: TimerMode) => {
-      setIsRunning(false);
-      if (endAtRef.current !== null) endAtRef.current = null;
-      setMode(nextMode);
-      setRemainingSec(getDurationSec(nextMode, settings));
-    },
-    [settings]
-  );
-
-  const adjustTime = useCallback((deltaSec: number) => {
-    setRemainingSec((prev) => {
-      const next = Math.max(1, Math.min(prev + deltaSec, 3 * 60 * 60));
-      if (endAtRef.current !== null) {
-        endAtRef.current += deltaSec * 1000;
-      }
-      return next;
-    });
-  }, []);
-
-  const updateSettings = useCallback(
-    (patch: Partial<TimerSettings>) => {
-      setSettings((prev) => {
-        const next = { ...prev, ...patch };
-        if (!isRunning) {
-          setRemainingSec(getDurationSec(mode, next));
-        }
-        return next;
-      });
-    },
-    [isRunning, mode]
-  );
-
-  const toggleFullscreen = useCallback(async () => {
-    setFullscreenError(null);
-    try {
-      if (!document.fullscreenElement) {
-        if (!document.documentElement.requestFullscreen) {
-          setFullscreenError('Fullscreen is not supported by this browser.');
-          return;
-        }
-        await document.documentElement.requestFullscreen();
-      } else {
-        await document.exitFullscreen();
-      }
-    } catch {
-      setFullscreenError('Could not enter fullscreen. It may be blocked by your browser.');
-    }
-  }, []);
-
-  const durationSec = getDurationSec(mode, settings);
-  const progress = Math.round(((durationSec - remainingSec) / durationSec) * 100);
-
-  return {
-    settings,
-    updateSettings,
-    mode,
-    switchMode,
-    isRunning,
-    remainingSec,
-    durationSec,
-    progress,
-    stats,
-    cycleCount,
-    banner,
-    setBanner,
-    isFullscreen,
-    fullscreenError,
-    toggleFullscreen,
-    showSettings,
-    setShowSettings,
-    toggleRun,
-    resetTimer,
-    skipSession,
-    adjustTime,
-    requestNotificationPermission,
-    formatTime,
-  };
-}
-
-const buttonClasses =
-  'inline-flex items-center justify-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
-const primaryButton = `${buttonClasses} bg-blue-600 text-white shadow-sm hover:bg-blue-700`;
-const ghostButton = `${buttonClasses} border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700`;
-const inputClass =
-  'w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white';
-
-function SettingsModal({
-  settings,
-  onSave,
-  onClose,
-  requestNotificationPermission,
-}: {
-  settings: TimerSettings;
-  onSave: (patch: Partial<TimerSettings>) => void;
-  onClose: () => void;
-  requestNotificationPermission: () => void;
-}) {
-  const [draft, setDraft] = useState<TimerSettings>(settings);
-
-  const setNumber = (key: 'focusMin' | 'shortBreakMin' | 'longBreakMin' | 'sessionsBeforeLongBreak') => {
-    return (e: React.ChangeEvent<HTMLInputElement>) => {
-      const value = Number(e.target.value);
-      if (Number.isFinite(value)) {
-        setDraft((prev) => ({ ...prev, [key]: Math.max(1, value) }));
+    return () => {
+      clearInterval(interval);
+      if (isRunning && pausedAtRef.current === null) {
+        pausedAtRef.current = Date.now();
       }
     };
-  };
+  }, [isRunning, mode, settings, completeSession]);
 
-  const handleToggleNotifications = () => {
-    const next = !draft.notificationsEnabled;
-    setDraft((prev) => ({ ...prev, notificationsEnabled: next }));
-    if (next) {
-      requestNotificationPermission();
-    }
-  };
+  // Switch mode and reset timer
+  const switchMode = useCallback((nextMode: TimerMode) => {
+    setIsRunning(false);
+    setMode(nextMode);
+    const duration = getDurationSec(nextMode, settings);
+    setRemainingSec(duration);
+    startTimeRef.current = null;
+    pausedAtRef.current = null;
+    totalPausedTimeRef.current = 0;
+  }, [settings]);
 
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Timer settings"
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-md rounded-xl border border-gray-200 bg-white p-6 shadow-xl dark:border-gray-700 dark:bg-gray-800"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="mb-5 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white">Timer Settings</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-200"
-            aria-label="Close settings"
-          >
-            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
+  // Handle session end - move to next mode
+  const handleSessionEnd = useCallback(() => {
+    setIsRunning(false);
+    const newCycle = cycleCount + 1;
+    const nextMode: TimerMode =
+      newCycle % settings.sessionsBeforeLongBreak === 0 ? 'longBreak' : 'shortBreak';
+    setMode(nextMode);
+    setRemainingSec(getDurationSec(nextMode, settings));
+    startTimeRef.current = Date.now();
 
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-600 dark:text-gray-400">
-                Focus (minutes)
-              </label>
-              <input type="number" min={1} max={180} value={draft.focusMin} onChange={setNumber('focusMin')} className={inputClass} aria-label="Focus duration in minutes" />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-600 dark:text-gray-400">
-                Short break (minutes)
-              </label>
-              <input type="number" min={1} max={60} value={draft.shortBreakMin} onChange={setNumber('shortBreakMin')} className={inputClass} aria-label="Short break duration in minutes" />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-600 dark:text-gray-400">
-                Long break (minutes)
-              </label>
-              <input type="number" min={1} max={120} value={draft.longBreakMin} onChange={setNumber('longBreakMin')} className={inputClass} aria-label="Long break duration in minutes" />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-600 dark:text-gray-400">
-                Sessions before long break
-              </label>
-              <input type="number" min={1} max={12} value={draft.sessionsBeforeLongBreak} onChange={setNumber('sessionsBeforeLongBreak')} className={inputClass} aria-label="Sessions before long break" />
-            </div>
-          </div>
+    // Save session
+    const newSession: TimerSession = {
+      id: Date.now().toString(),
+      date: todayKey(),
+      mode,
+      subject: subject || 'General',
+      task: task || 'Study session',
+      durationSec: settings.focusMin * 60,
+      completed: true,
+      startedAt: Date.now() - settings.focusMin * 60 * 1000,
+      completedAt: Date.now(),
+    };
+    setSessions((prev) => [newSession, ...prev.slice(0, 9)]);
+    setRecentSubjectsState((prev) => {
+      const already = new Set(prev);
+      if (!already.has(subject || 'General')) prev.push(subject || 'General');
+      return prev;
+    });
 
-          <div className="space-y-3 border-t border-gray-200 pt-4 dark:border-gray-700">
-            <label className="flex cursor-pointer items-center justify-between gap-3">
-              <span className="text-sm text-gray-700 dark:text-gray-300">Auto-start next session</span>
-              <input
-                type="checkbox"
-                checked={draft.autoStartNext}
-                onChange={(e) => setDraft((prev) => ({ ...prev, autoStartNext: e.target.checked }))}
-                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-            </label>
-            <label className="flex cursor-pointer items-center justify-between gap-3">
-              <span className="text-sm text-gray-700 dark:text-gray-300">Play sound when session ends</span>
-              <input
-                type="checkbox"
-                checked={draft.soundEnabled}
-                onChange={(e) => setDraft((prev) => ({ ...prev, soundEnabled: e.target.checked }))}
-                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-            </label>
-            <label className="flex cursor-pointer items-center justify-between gap-3">
-              <span className="text-sm text-gray-700 dark:text-gray-300">Browser notifications</span>
-              <input
-                type="checkbox"
-                checked={draft.notificationsEnabled}
-                onChange={handleToggleNotifications}
-                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-            </label>
-          </div>
-        </div>
+    // Update stats
+    setStats((prev) => ({
+      ...prev,
+      sessionsCompleted: prev.sessionsCompleted + 1,
+      focusSeconds: prev.focusSeconds + (settings.focusMin * 60),
+    }));
+    setCycleCount((prev) => prev + 1);
+  }, [settings, cycleCount, mode, subject, task, setRecentSubjectsState, setStats, setSessions]);
 
-        <div className="mt-6 flex justify-end gap-2">
-          <button type="button" onClick={onClose} className={ghostButton}>
-            Cancel
-          </button>
-          <button type="button" onClick={() => onSave(draft)} className={primaryButton}>
-            Save Settings
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
+  // Sync stats to localStorage
+  useEffect(() => {
+    saveStats(stats);
+  }, [stats]);
 
-function TimerFace({
-  mode,
-  remainingSec,
-  progress,
-  isRunning,
-  large,
-}: {
-  mode: TimerMode;
-  remainingSec: number;
-  progress: number;
-  isRunning: boolean;
-  large: boolean;
-}) {
-  return (
-    <div className="text-center">
-      <span
-        className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ${
-          mode === 'focus'
-            ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
-            : mode === 'shortBreak'
-              ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-200'
-              : 'bg-violet-100 text-violet-700 dark:bg-violet-900 dark:text-violet-200'
-        }`}
-      >
-        {MODE_LABELS[mode]}
-      </span>
-      <div className={large ? 'mt-6 text-8xl font-bold tracking-tight tabular-nums sm:text-9xl' : 'mt-4 text-6xl font-bold tracking-tight tabular-nums sm:text-7xl'}>
-        <span className={mode === 'focus' ? 'text-gray-900 dark:text-white' : 'text-gray-900 dark:text-white'}>
-          {formatTime(remainingSec)}
-        </span>
-      </div>
-      <div className="mx-auto mt-6 h-2 w-full max-w-md overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
-        <div
-          className={`h-full rounded-full transition-[width] duration-300 ${
-            mode === 'focus' ? 'bg-blue-600' : mode === 'shortBreak' ? 'bg-emerald-500' : 'bg-violet-500'
-          }`}
-          style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
-          role="progressbar"
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-valuenow={Math.min(100, Math.max(0, progress))}
-          aria-label="Session progress"
-        />
-      </div>
-      <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
-        {isRunning ? 'Session in progress' : 'Timer ready'}
-      </p>
-    </div>
-  );
-}
+  // Sync sessions to localStorage
+  useEffect(() => {
+    saveSessions(sessions);
+  }, [sessions]);
 
-export default function StudyTimerPage() {
-  const timer = useStudyTimer();
+  // Sync settings to localStorage
+  useEffect(() => {
+    saveSettings(settings);
+  }, [settings]);
 
-  const {
-    settings,
-    updateSettings,
-    mode,
-    switchMode,
-    isRunning,
-    remainingSec,
-    progress,
-    stats,
-    banner,
-    setBanner,
-    isFullscreen,
-    fullscreenError,
-    toggleFullscreen,
-    showSettings,
-    setShowSettings,
-    toggleRun,
-    resetTimer,
-    skipSession,
-    adjustTime,
-    requestNotificationPermission,
-  } = timer;
+  // Sync cycle count to localStorage
+  useEffect(() => {
+    saveCycleCount(cycleCount);
+  }, [cycleCount]);
 
-  const currentSession = stats.sessionsCompleted + 1;
+  // Format stats
   const focusMinutesToday = Math.floor(stats.focusSeconds / 60);
   const focusSecondsToday = stats.focusSeconds % 60;
 
-  const controls = (
-    <div className="flex flex-wrap items-center justify-center gap-2">
-      <button type="button" onClick={toggleRun} className={isRunning ? `${buttonClasses} bg-red-600 text-white hover:bg-red-700` : primaryButton} aria-label={isRunning ? 'Pause timer' : 'Start timer'}>
-        {isRunning ? 'Pause' : 'Start'}
-      </button>
-      <button type="button" onClick={resetTimer} className={ghostButton} aria-label="Reset timer">
-        Reset
-      </button>
-      <button type="button" onClick={skipSession} className={ghostButton} aria-label="Skip to next session">
-        Skip
-      </button>
-      <button type="button" onClick={() => adjustTime(-60)} className={ghostButton} aria-label="Subtract one minute">
-        −1 min
-      </button>
-      <button type="button" onClick={() => adjustTime(60)} className={ghostButton} aria-label="Add one minute">
-        +1 min
+  // Find current (non-completed) session
+  const currentSession = sessions.find((s) => !s.completed) || {
+    id: '', mode: 'focus' as TimerMode, subject: '', task: '', durationSec: 0, completed: false, startedAt: null, completedAt: null,
+  };
+  const currentSessionNum = sessions.filter((s) => !s.completed).length;
+  const totalSessionsCompleted = sessions.filter((s) => s.completed).length;
+
+  // Mode buttons
+  const modeButtons = (
+    <div className="grid grid-cols-1 gap-2 mb-6 sm:grid-cols-3">
+      {(Object.keys(PRESET_MODES) as (keyof typeof PRESET_MODES)[]).map((key) => {
+        const preset = PRESET_MODES[key];
+        return (
+          <button
+            key={key}
+            type="button"
+            onClick={() => switchMode(preset.mode)}
+            className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+              mode === preset.mode
+                ? 'bg-blue-600 text-white shadow-sm'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+            }`}
+            aria-pressed={mode === preset.mode}
+          >
+            {key === 'pomodoro' ? 'Pomodoro' : key === 'shortStudy' ? 'Short Study' : key === 'deepWork' ? 'Deep Work' : 'Exam Mode'}
+          </button>
+        );
+      })}
+      <button
+        type="button"
+        onClick={() => setMode('custom')}
+        className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+          mode === 'custom' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+        }`}
+        aria-pressed={mode === 'custom'}
+      >
+        Custom
       </button>
     </div>
   );
 
-  const statsRow = (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-      <div className="rounded-xl border border-gray-200 bg-white p-4 text-center shadow-sm dark:border-gray-700 dark:bg-gray-800">
-        <p className="text-sm text-gray-500 dark:text-gray-400">Current Session</p>
-        <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">{currentSession}</p>
-      </div>
-      <div className="rounded-xl border border-gray-200 bg-white p-4 text-center shadow-sm dark:border-gray-700 dark:bg-gray-800">
-        <p className="text-sm text-gray-500 dark:text-gray-400">Completed Today</p>
-        <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">{stats.sessionsCompleted}</p>
-      </div>
-      <div className="rounded-xl border border-gray-200 bg-white p-4 text-center shadow-sm dark:border-gray-700 dark:bg-gray-800">
-        <p className="text-sm text-gray-500 dark:text-gray-400">Focus Time Today</p>
-        <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
-          {focusMinutesToday}:{String(focusSecondsToday).padStart(2, '0')}
-        </p>
+  // Controls
+  const controls = (
+    <div className="flex flex-wrap items-center justify-center gap-2">
+      <button
+        type="button"
+        onClick={() => setIsRunning(prev => !prev)}
+        className={isRunning ? 'inline-flex items-center justify-center gap-1 rounded-lg px-4 py-2 text-sm font-medium transition-colors bg-red-600 text-white hover:bg-red-700' : 'inline-flex items-center justify-center gap-1 rounded-lg px-4 py-2 text-sm font-medium bg-blue-600 text-white'}
+        aria-label={isRunning ? 'Pause timer' : 'Start timer'}
+      >
+        {isRunning ? 'Pause' : 'Start'}
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          setIsRunning(false);
+          const duration = getDurationSec(mode, settings);
+          setRemainingSec(duration);
+          startTimeRef.current = null;
+          pausedAtRef.current = null;
+          totalPausedTimeRef.current = 0;
+        }}
+        className="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+        aria-label="Reset timer"
+      >
+        Reset
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          setIsRunning(false);
+          const newCycle = cycleCount + 1;
+          const nextMode: TimerMode =
+            newCycle % settings.sessionsBeforeLongBreak === 0 ? 'longBreak' : 'shortBreak';
+          setMode(nextMode);
+          const duration = getDurationSec(nextMode, settings);
+          setRemainingSec(duration);
+          startTimeRef.current = null;
+          pausedAtRef.current = null;
+          totalPausedTimeRef.current = 0;
+        }}
+        className="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+        aria-label="Skip to next session"
+      >
+        Skip
+      </button>
+    </div>
+  );
+
+  // Settings panel
+  const [showSettings, setShowSettings] = useState(false);
+
+  const settingsPanel = showSettings && (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50" onClick={() => setShowSettings(false)}>
+      <div className="fixed top-20 left-1/2 -translate-x-1/2 w-full max-w-md bg-white dark:bg-gray-800 rounded-xl p-6 shadow-xl transform transition-opacity duration-300" onClick={(e) => e.stopPropagation()}>
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">Timer Settings</h2>
+        
+        <div className="grid grid-cols-1 gap-4 mb-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
+              Focus duration (min)
+            </label>
+            <input
+              type="number"
+              min={1}
+              max={120}
+              value={settings.focusMin}
+              onChange={(e) => {
+                const v = Math.max(1, Math.min(120, Number(e.target.value)));
+                setSettings((prev) => ({ ...prev, focusMin: v }));
+                setRemainingSec(getDurationSec(mode, { ...settings, focusMin: v }));
+              }}
+              className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
+              Short break (min)
+            </label>
+            <input
+              type="number"
+              min={1}
+              max={30}
+              value={settings.shortBreakMin}
+              onChange={(e) => {
+                const v = Math.max(1, Math.min(30, Number(e.target.value)));
+                setSettings((prev) => ({ ...prev, shortBreakMin: v }));
+              }}
+              className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 mb-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
+              Long break (min)
+            </label>
+            <input
+              type="number"
+              min={1}
+              max={30}
+              value={settings.longBreakMin}
+              onChange={(e) => {
+                const v = Math.max(1, Math.min(30, Number(e.target.value)));
+                setSettings((prev) => ({ ...prev, longBreakMin: v }));
+              }}
+              className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
+              Sessions before long break
+            </label>
+            <input
+              type="number"
+              min={1}
+              max={20}
+              value={settings.sessionsBeforeLongBreak}
+              onChange={(e) => {
+                const v = Math.max(1, Math.min(20, Number(e.target.value)));
+                setSettings((prev) => ({ ...prev, sessionsBeforeLongBreak: v }));
+              }}
+              className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 mb-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
+              Auto-start next
+            </label>
+            <label className="inline-flex items-center gap-2 px-3 py-1.5 rounded border border-gray-300 dark:border-gray-600 cursor-pointer ${
+              settings.autoStartNext ? 'bg-blue-100 text-blue-600 dark:bg-gray-700 dark:text-blue-400' : ''
+            }">
+              <input
+                type="checkbox"
+                checked={settings.autoStartNext}
+                onChange={(e) => setSettings((prev) => ({ ...prev, autoStartNext: e.target.checked }))}
+                className="rounded accent-blue-600 dark:accent-blue-500"
+              />
+              Yes
+            </label>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
+              Sound
+            </label>
+            <label className="inline-flex items-center gap-2 px-3 py-1.5 rounded border border-gray-300 dark:border-gray-600 cursor-pointer ${
+              settings.soundEnabled ? 'bg-blue-100 text-blue-600 dark:bg-gray-700 dark:text-blue-400' : ''
+            }">
+              <input
+                type="checkbox"
+                checked={settings.soundEnabled}
+                onChange={(e) => setSettings((prev) => ({ ...prev, soundEnabled: e.target.checked }))}
+                className="rounded accent-blue-600 dark:accent-blue-500"
+              />
+              On
+            </label>
+          </div>
+        </div>
+
+        <div className="mt-8 flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={() => setShowSettings(false)}
+            className="inline-flex items-center justify-center rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
+            aria-label="Cancel"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowSettings(false)}
+            className="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-blue-700"
+            aria-label="Save settings"
+          >
+            Save
+          </button>
+        </div>
       </div>
     </div>
   );
+
+  // Custom duration controls
+  const customControls = (
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 mt-4">
+      <div>
+        <label className="mb-1 block text-sm font-medium text-gray-600 dark:text-gray-400">
+          Study duration (minutes)
+        </label>
+        <input
+          type="number"
+          min={1}
+          max={120}
+          value={settings.customMin}
+          onChange={(e) => {
+            const v = Math.max(1, Math.min(120, Number(e.target.value)));
+            setSettings((prev) => ({ ...prev, customMin: v }));
+            const nextSettings = { ...settings, customMin: v };
+            setRemainingSec(getDurationSec('custom' as TimerMode, nextSettings));
+          }}
+          className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+          aria-label="Custom study duration in minutes"
+        />
+      </div>
+      <div>
+        <label className="mb-1 block text-sm font-medium text-gray-600 dark:text-gray-400">
+          Break duration (minutes)
+        </label>
+        <input
+          type="number"
+          min={1}
+          max={30}
+          value={settings.customBreakMin}
+          onChange={(e) => {
+            const v = Math.max(1, Math.min(30, Number(e.target.value)));
+            setSettings((prev) => ({ ...prev, customBreakMin: v }));
+          }}
+          className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+          aria-label="Custom break duration in minutes"
+        />
+      </div>
+    </div>
+  );
+
+  // Session completion state
+  const [showCompletion, setShowCompletion] = useState(false);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <nav className="mb-8 border-b border-gray-200 pb-4 dark:border-gray-700">
+        <nav className="mb-8 border-b border-gray-200 dark:border-gray-700 pb-4">
           <Link
             href="/students"
             className="inline-flex items-center gap-1 text-sm text-gray-500 transition hover:text-gray-700 dark:hover:text-gray-200"
@@ -660,6 +789,43 @@ export default function StudyTimerPage() {
 
         <div className="mx-auto max-w-2xl">
           <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800 sm:p-10">
+            {/* Subject and Task Input */}
+            <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-600 dark:text-gray-400">
+                  Subject
+                </label>
+                <input
+                  type="text"
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
+                  placeholder="e.g. Physics"
+                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                  list="subject-suggestions"
+                />
+                <datalist id="subject-suggestions">
+                  <option value="Mathematical Methods" />
+                  <option value="Physics" />
+                  <option value="English Language" />
+                  <option value="Vietnamese" />
+                  <option value="Chemistry" />
+                  <option value="Biology" />
+                </datalist>
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-600 dark:text-gray-400">
+                  Task
+                </label>
+                <input
+                  type="text"
+                  value={task}
+                  onChange={(e) => setTask(e.target.value)}
+                  placeholder="e.g. Waves revision"
+                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                />
+              </div>
+            </div>
+
             <div className="mb-6 grid grid-cols-3 gap-2">
               {(Object.keys(MODE_LABELS) as TimerMode[]).map((m) => (
                 <button
@@ -678,127 +844,165 @@ export default function StudyTimerPage() {
               ))}
             </div>
 
-            <TimerFace mode={mode} remainingSec={remainingSec} progress={progress} isRunning={isRunning} large={false} />
-
             <div className="mt-8">{controls}</div>
           </div>
-
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
-            <button type="button" onClick={() => setShowSettings(true)} className={ghostButton} aria-label="Open settings">
-              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="3" />
-                <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33h0a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51h0a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v0a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z" />
-              </svg>
-              Settings
-            </button>
-            <button type="button" onClick={toggleFullscreen} className={ghostButton} aria-label="Toggle fullscreen">
-              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                <path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3" />
-              </svg>
-              {isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
-            </button>
-          </div>
-
-          {fullscreenError && (
-            <div className="mt-4 rounded-md bg-amber-50 p-4 text-sm text-amber-800 dark:bg-amber-900/50 dark:text-amber-200">
-              {fullscreenError}
-            </div>
-          )}
-
-          <div className="mt-6">{statsRow}</div>
-
-          <div className="mt-8 rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-            <h2 className="mb-2 text-sm font-semibold text-gray-900 dark:text-white">Today&apos;s Settings</h2>
-            <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-3">
-              <div>
-                <dt className="text-gray-500 dark:text-gray-400">Focus</dt>
-                <dd className="font-medium text-gray-900 dark:text-white">{settings.focusMin} min</dd>
-              </div>
-              <div>
-                <dt className="text-gray-500 dark:text-gray-400">Short break</dt>
-                <dd className="font-medium text-gray-900 dark:text-white">{settings.shortBreakMin} min</dd>
-              </div>
-              <div>
-                <dt className="text-gray-500 dark:text-gray-400">Long break</dt>
-                <dd className="font-medium text-gray-900 dark:text-white">{settings.longBreakMin} min</dd>
-              </div>
-              <div>
-                <dt className="text-gray-500 dark:text-gray-400">Long break after</dt>
-                <dd className="font-medium text-gray-900 dark:text-white">{settings.sessionsBeforeLongBreak} sessions</dd>
-              </div>
-              <div>
-                <dt className="text-gray-500 dark:text-gray-400">Auto-start next</dt>
-                <dd className="font-medium text-gray-900 dark:text-white">{settings.autoStartNext ? 'On' : 'Off'}</dd>
-              </div>
-              <div>
-                <dt className="text-gray-500 dark:text-gray-400">Sound</dt>
-                <dd className="font-medium text-gray-900 dark:text-white">{settings.soundEnabled ? 'On' : 'Off'}</dd>
-              </div>
-            </dl>
-          </div>
-
-          <p className="mt-6 text-center text-xs text-gray-400 dark:text-gray-500">
-            The timer tracks elapsed time using timestamps, so it stays accurate even when the browser tab is in the
-            background. Everything is stored locally on your device.
-          </p>
         </div>
-      </div>
 
-      {banner && (
-        <div
-          className="fixed inset-x-0 top-4 z-40 mx-auto w-fit max-w-md rounded-xl border border-emerald-200 bg-emerald-50 p-4 shadow-lg dark:border-emerald-900 dark:bg-emerald-950"
-          role="status"
-        >
-          <div className="flex items-start gap-3">
-            <svg className="mt-0.5 h-6 w-6 shrink-0 text-emerald-600 dark:text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-              <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
-              <path d="M22 4L12 14.01l-3-3" />
-            </svg>
-            <div className="flex-1">
-              <p className="font-semibold text-emerald-900 dark:text-emerald-100">{banner.title}</p>
-              <p className="text-sm text-emerald-700 dark:text-emerald-300">{banner.body}</p>
-            </div>
+        {/* Timer display - prominent when in fullscreen or normal view */}
+        <div className="mt-6 flex flex-col items-center gap-4">
+          {/* Fullscreen toggle */}
+          {isFullscreen && (
             <button
               type="button"
-              onClick={() => setBanner(null)}
-              className="rounded p-1 text-emerald-600 hover:bg-emerald-100 dark:text-emerald-300 dark:hover:bg-emerald-900"
-              aria-label="Dismiss notification"
+              onClick={exitFullscreen}
+              className="absolute top-4 right-4 rounded-full bg-black/70 p-2 text-white hover:bg-black/90 transition-colors"
+              aria-label="Exit fullscreen"
             >
-              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              ✕
             </button>
+          )}
+          {!isFullscreen && (
+            <button
+              type="button"
+              onClick={() => enterFullscreen(document.getElementById('timer-container') as HTMLElement | null)}
+              className="inline-flex items-center justify-center rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
+              aria-label="Full screen"
+            >
+              Full Screen
+            </button>
+          )}
+
+          {/* Subject and task info */}
+          {subject || task ? (
+            <div className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+              {subject && <span className="font-medium text-gray-900 dark:text-white">{subject}</span>}{subject && task ? ' - ' : ''}{task || ''}
+            </div>
+          ) : null}
+
+          {/* Mode label */}
+          <div className="text-sm text-gray-500 dark:text-gray-400">
+            {MODE_LABELS[mode]}
+          </div>
+
+          {/* Countdown - large and prominent */}
+          <div id="timer-container" className="relative">
+            <span className="text-6xl font-extrabold text-gray-900 dark:text-white tracking-tight">
+              {formatTime(remainingSec)}
+            </span>
+          </div>
+
+          {/* Progress bar */}
+          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4 mt-2 overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-300 ease-out"
+              style={{ width: `${(1 - remainingSec / getDurationSec(mode, settings)) * 100}%` }}
+            />
+          </div>
+
+          {/* Session number */}
+          <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            Session {cycleCount + 1} of {settings.sessionsBeforeLongBreak}
           </div>
         </div>
-      )}
 
-      {showSettings && (
-        <SettingsModal
-          settings={settings}
-          onSave={(patch) => {
-            updateSettings(patch);
-            setShowSettings(false);
-          }}
-          onClose={() => setShowSettings(false)}
-          requestNotificationPermission={requestNotificationPermission}
-        />
-      )}
-
-      {isFullscreen && (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gray-50 px-6 dark:bg-gray-900">
-          <TimerFace mode={mode} remainingSec={remainingSec} progress={progress} isRunning={isRunning} large />
-          <div className="mt-10">{controls}</div>
-          <button type="button" onClick={toggleFullscreen} className={`${ghostButton} mt-8`} aria-label="Exit fullscreen">
-            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-              <path d="M8 3v3a2 2 0 01-2 2H3m18 0h-3a2 2 0 01-2-2V3m0 18v-3a2 2 0 012-2h3M3 16h3a2 2 0 012 2v3" />
-            </svg>
-            Exit fullscreen (Esc)
+        {/* Controls */}
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowSettings(true)}
+            className="inline-flex items-center justify-center rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
+            aria-label="Open settings"
+          >
+            Settings
           </button>
-          {fullscreenError && (
-            <p className="mt-4 text-sm text-amber-700 dark:text-amber-300">{fullscreenError}</p>
-          )}
+          {showSettings && settingsPanel}
         </div>
-      )}
+
+        {/* Stats row */}
+        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className="rounded-xl border border-gray-200 bg-white p-4 text-center shadow-sm dark:border-gray-700 dark:bg-gray-800">
+            <p className="text-sm text-gray-500 dark:text-gray-400">Current Session</p>
+            <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">{currentSessionNum}</p>
+          </div>
+          <div className="rounded-xl border border-gray-200 bg-white p-4 text-center shadow-sm dark:border-gray-700 dark:bg-gray-800">
+            <p className="text-sm text-gray-500 dark:text-gray-400">Completed Today</p>
+            <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">{totalSessionsCompleted}</p>
+          </div>
+          <div className="rounded-xl border border-gray-200 bg-white p-4 text-center shadow-sm dark:border-gray-700 dark:bg-gray-800">
+            <p className="text-sm text-gray-500 dark:text-gray-400">Focus Time Today</p>
+            <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
+              {focusMinutesToday}:{String(focusSecondsToday).padStart(2, '0')}
+            </p>
+          </div>
+        </div>
+
+        {/* Session completion state */}
+        {showCompletion && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-8 max-w-md w-full transform transition-opacity duration-300">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Session Complete</h2>
+              <p className="text-gray-600 dark:text-gray-400 mb-6">
+                {subject || 'Study'} — {task || 'session'} finished
+              </p>
+              <p className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+                {formatTime(settings.focusMin * 60)} studied
+              </p>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowCompletion(false);
+                    // Move to break
+                    const newCycle = cycleCount + 1;
+                    const nextMode: TimerMode =
+                      newCycle % settings.sessionsBeforeLongBreak === 0 ? 'longBreak' : 'shortBreak';
+                    setMode(nextMode);
+                    const duration = getDurationSec(nextMode, settings);
+                    setRemainingSec(duration);
+                    startTimeRef.current = null;
+                    pausedAtRef.current = null;
+                    totalPausedTimeRef.current = 0;
+                    if (settings.autoStartNext) {
+                      setIsRunning(true);
+                    }
+                  }}
+                  className="button flex-1"
+                  aria-label="Start break"
+                >
+                  Start Break
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowCompletion(false);
+                    // Start another study session
+                    setMode('focus');
+                    const duration = getDurationSec('focus', settings);
+                    setRemainingSec(duration);
+                    startTimeRef.current = null;
+                    pausedAtRef.current = null;
+                    totalPausedTimeRef.current = 0;
+                    if (settings.autoStartNext) {
+                      setIsRunning(true);
+                    }
+                  }}
+                  className="button flex-1"
+                  aria-label="Start another session"
+                >
+                  Study Again
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Auto-start break or next session after completion */}
+        {isRunning || totalSessionsCompleted > 0 && (
+          <p className="mt-6 text-center text-xs text-gray-400 dark:text-gray-500">
+            The timer tracks elapsed time using timestamps, so it stays accurate even when the browser tab is in the background. Everything is stored locally on your device.
+          </p>
+        )}
+      </div>
     </div>
   );
 }

@@ -3,18 +3,18 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 
-interface FlashcardDeck {
-  id: string;
-  name: string;
-  icon?: string;
-  cards: Flashcard[];
-}
-
 interface Flashcard {
   id: string;
   front: string;
   back: string;
   known: boolean;
+}
+
+interface FlashcardDeck {
+  id: string;
+  name: string;
+  icon: string;
+  cards: Flashcard[];
 }
 
 const DECKS_KEY = 'flashcards-decks';
@@ -30,9 +30,27 @@ function loadDecks(): FlashcardDeck[] {
   }
 }
 
+function saveDecks(decks: FlashcardDeck[]) {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(DECKS_KEY, JSON.stringify(decks));
+  } catch {
+    // storage unavailable
+  }
+}
+
 function loadCurrentDeckId(): string | null {
   if (typeof window === 'undefined') return null;
   return localStorage.getItem(CURRENT_DECK_KEY);
+}
+
+function saveCurrentDeckId(id: string | null) {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(CURRENT_DECK_KEY, id || '');
+  } catch {
+    // storage unavailable
+  }
 }
 
 export function useFlashcards() {
@@ -42,14 +60,14 @@ export function useFlashcards() {
   const [flipped, setFlipped] = useState(false);
 
   useEffect(() => {
-    localStorage.setItem(DECKS_KEY, JSON.stringify(decks));
+    saveDecks(decks);
   }, [decks]);
 
   useEffect(() => {
     if (currentDeckId) {
-      localStorage.setItem(CURRENT_DECK_KEY, currentDeckId);
+      saveCurrentDeckId(currentDeckId);
     } else {
-      localStorage.removeItem(CURRENT_DECK_KEY);
+      saveCurrentDeckId(null);
     }
   }, [currentDeckId]);
 
@@ -87,6 +105,12 @@ export function useFlashcards() {
     setFlipped(false);
   }, []);
 
+  const renameDeck = useCallback((id: string, newName: string) => {
+    setDecks((prev) =>
+      prev.map((d) => (d.id === id ? { ...d, name: newName.trim() || 'New Deck' } : d))
+    );
+  }, []);
+
   const addCard = useCallback((front: string, back: string) => {
     if (!currentDeckId) return;
     const newCard: Flashcard = {
@@ -103,7 +127,7 @@ export function useFlashcards() {
     setCardIndex((prev) => {
       const deck = decks.find((d) => d.id === currentDeckId);
       if (!deck) return prev;
-      return deck.cards.length;
+      return Math.max(0, Math.min(deck.cards.length, prev));
     });
     setFlipped(false);
   }, [currentDeckId, decks]);
@@ -132,6 +156,8 @@ export function useFlashcards() {
         };
       })
     );
+    setCardIndex(0);
+    setFlipped(false);
   }, []);
 
   const goToCard = useCallback((index: number) => {
@@ -158,23 +184,52 @@ export function useFlashcards() {
     setFlipped((f) => !f);
   }, []);
 
+  const shuffleDeck = useCallback(() => {
+    if (!currentDeck || currentDeck.cards.length <= 1) return;
+    const shuffled = [...currentDeck.cards].sort(() => Math.random() - 0.5);
+    setDecks((prev) =>
+      prev.map((d) =>
+        d.id === currentDeckId ? { ...d, cards: shuffled } : d
+      )
+    );
+  }, [currentDeck]);
+
+  const restartDeck = useCallback(() => {
+    setCardIndex(0);
+    setFlipped(false);
+  }, []);
+
+  const knownCount = currentDeck
+    ? currentDeck.cards.filter((c) => c.known).length
+    : 0;
+
+  const displayCard = currentDeck && currentDeck.cards.length > 0
+    ? currentDeck.cards[cardIndex % currentDeck.cards.length]
+    : null;
+
   return {
     decks,
     setDecks,
     currentDeck,
     setCurrentDeck,
-    cardIndex,
-    goToCard,
+    selectDeck,
     addDeck,
     removeDeck,
-    selectDeck,
+    renameDeck,
     addCard,
     removeCard,
     toggleKnown,
     nextCard,
     prevCard,
-    flipped,
     toggleFlip,
+    shuffleDeck,
+    restartDeck,
+    cardIndex,
+    goToCard,
+    flipped,
+    displayCard,
+    knownCount,
+    currentDeckId,
   };
 }
 
@@ -184,28 +239,40 @@ export default function FlashcardsPage() {
     currentDeck,
     addDeck,
     removeDeck,
+    renameDeck,
     selectDeck,
     addCard,
     removeCard,
     toggleKnown,
     nextCard,
     prevCard,
+    toggleFlip,
+    shuffleDeck,
+    restartDeck,
     cardIndex,
     goToCard,
     flipped,
-    toggleFlip,
+    displayCard,
+    knownCount,
+    currentDeckId,
   } = useFlashcards();
 
   const [front, setFront] = useState('');
   const [back, setBack] = useState('');
   const [showAddCard, setShowAddCard] = useState(false);
+  const [editingDeckId, setEditingDeckId] = useState<string | null>(null);
+  const [editingDeckName, setEditingDeckName] = useState('');
 
-  const displayCard = currentDeck && currentDeck.cards.length > 0
-    ? currentDeck.cards[cardIndex % currentDeck.cards.length]
-    : null;
-  const knownCount = currentDeck
-    ? currentDeck.cards.filter((c) => c.known).length
-    : 0;
+  const classes = {
+    input:
+      'w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white',
+    ghostButton:
+      'inline-flex items-center justify-center rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800',
+    button:
+      'inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-blue-700',
+    card: 'rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800',
+    title: 'text-xl font-bold text-gray-900 dark:text-white',
+  };
 
   const handleAddCard = () => {
     addCard(front.trim(), back.trim());
@@ -214,18 +281,35 @@ export default function FlashcardsPage() {
     setShowAddCard(false);
   };
 
-  const inputClass =
-    'w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white';
-  const ghostButton =
-    'inline-flex items-center justify-center rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800';
+  const handleRenameDeck = () => {
+    if (editingDeckId && editingDeckName.trim()) {
+      renameDeck(editingDeckId, editingDeckName.trim());
+      setEditingDeckId(null);
+      setEditingDeckName('');
+    }
+  };
+
+  // Confirm delete deck
+  const confirmDeleteDeck = (deckId: string) => {
+    if (window.confirm('Are you sure you want to delete this deck? This cannot be undone.')) {
+      removeDeck(deckId);
+    }
+  };
+
+  // Confirm delete card
+  const confirmDeleteCard = (cardId: string) => {
+    if (window.confirm('Are you sure you want to delete this card? This cannot be undone.')) {
+      removeCard(currentDeckId || '', cardId);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <nav className="mb-8 border-b border-gray-200 pb-4 dark:border-gray-700">
+        <nav className="mb-8 border-b border-gray-200 dark:border-gray-700 pb-4">
           <Link
             href="/students"
-            className="inline-flex items-center gap-1 text-sm text-gray-500 transition hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            className="inline-flex items-center gap-1 text-sm text-gray-500 transition hover:text-gray-700 dark:hover:text-gray-200"
           >
             <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
               <path d="M15 18l-6-6 6-6" />
@@ -239,7 +323,7 @@ export default function FlashcardsPage() {
             <button
               type="button"
               onClick={addDeck}
-              className={ghostButton}
+              className={classes.ghostButton}
             >
               + New deck
             </button>
@@ -250,9 +334,38 @@ export default function FlashcardsPage() {
           <section className="mx-auto max-w-2xl">
             <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h2 className="text-lg font-medium text-gray-900 dark:text-white">
-                  {currentDeck.icon} {currentDeck.name}
-                </h2>
+                {editingDeckId === currentDeck.id ? (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={editingDeckName}
+                      onChange={(e) => setEditingDeckName(e.target.value)}
+                      className={classes.input}
+                      autoFocus
+                    />
+                    <button
+                      type="button"
+                      onClick={handleRenameDeck}
+                      className={classes.button}
+                    >
+                      Save
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingDeckId(null);
+                        setEditingDeckName('');
+                      }}
+                      className={classes.ghostButton}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <h2 className="text-lg font-medium text-gray-900 dark:text-white">
+                    {currentDeck.icon} {currentDeck.name}
+                  </h2>
+                )}
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   Card {cardIndex + 1} of {currentDeck.cards.length} · {knownCount} known
                 </p>
@@ -261,13 +374,23 @@ export default function FlashcardsPage() {
                 <button
                   type="button"
                   onClick={() => setShowAddCard((s) => !s)}
-                  className={ghostButton}
+                  className={classes.ghostButton}
                 >
                   + Add card
                 </button>
                 <button
                   type="button"
-                  onClick={() => removeDeck(currentDeck.id)}
+                  onClick={() => {
+                    setEditingDeckId(currentDeck.id);
+                    setEditingDeckName(currentDeck.name);
+                  }}
+                  className={classes.ghostButton}
+                >
+                  Rename
+                </button>
+                <button
+                  type="button"
+                  onClick={() => confirmDeleteDeck(currentDeck.id)}
                   className="inline-flex items-center justify-center rounded-md border border-red-300 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900/20"
                 >
                   Delete deck
@@ -287,7 +410,7 @@ export default function FlashcardsPage() {
                       value={front}
                       onChange={(e) => setFront(e.target.value)}
                       rows={2}
-                      className={inputClass}
+                      className={classes.input}
                       placeholder="Question or prompt"
                     />
                   </div>
@@ -300,19 +423,19 @@ export default function FlashcardsPage() {
                       value={back}
                       onChange={(e) => setBack(e.target.value)}
                       rows={2}
-                      className={inputClass}
+                      className={classes.input}
                       placeholder="Answer"
                     />
                   </div>
                 </div>
                 <div className="mt-4 flex justify-end gap-2">
-                  <button type="button" onClick={() => setShowAddCard(false)} className={ghostButton}>
+                  <button type="button" onClick={() => setShowAddCard(false)} className={classes.ghostButton}>
                     Cancel
                   </button>
                   <button
                     type="button"
                     onClick={handleAddCard}
-                    className="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+                    className={classes.button}
                   >
                     Save card
                   </button>
@@ -336,7 +459,7 @@ export default function FlashcardsPage() {
                 {flipped ? 'Back' : 'Front'}
               </p>
               <p className="text-2xl font-medium leading-snug text-gray-900 dark:text-white">
-                {flipped ? displayCard.back : displayCard.front}
+                {flipped ? displayCard?.back : displayCard?.front}
               </p>
               <p className="mt-6 text-xs text-gray-400 dark:text-gray-500">
                 Click the card to flip
@@ -344,52 +467,66 @@ export default function FlashcardsPage() {
             </div>
 
             <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-              <button type="button" onClick={prevCard} className={ghostButton} aria-label="Previous card">
+              <button
+                type="button"
+                onClick={prevCard}
+                className={classes.ghostButton}
+                aria-label="Previous card"
+              >
                 ‹ Prev
               </button>
-              <button type="button" onClick={toggleFlip} className={ghostButton} aria-label="Flip card">
+              <button
+                type="button"
+                onClick={toggleFlip}
+                className={classes.ghostButton}
+                aria-label="Flip card"
+              >
                 Flip
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  toggleKnown(currentDeck.id, displayCard.id);
-                  nextCard();
-                }}
-                className={displayCard.known
+                onClick={() => toggleKnown(currentDeckId || '', displayCard?.id)}
+                className={displayCard?.known
                   ? 'inline-flex items-center justify-center rounded-md border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-700 transition-colors dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-400'
                   : 'inline-flex items-center justify-center rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800'}
-                aria-pressed={displayCard.known}
+                aria-pressed={displayCard?.known}
               >
-                {displayCard.known ? 'Known ✓' : 'Mark known'}
+                {displayCard?.known ? 'Known ✓' : 'Mark known'}
               </button>
-              <button type="button" onClick={nextCard} className={ghostButton} aria-label="Next card">
+              <button
+                type="button"
+                onClick={nextCard}
+                className={classes.ghostButton}
+                aria-label="Next card"
+              >
                 Next ›
               </button>
-            </div>
-
-            <div className="mt-6 flex flex-wrap items-center justify-center gap-1.5">
-              {currentDeck.cards.map((card, i) => (
+              {currentDeck.cards.length > 1 && (
                 <button
-                  key={card.id}
                   type="button"
-                  onClick={() => goToCard(i)}
-                  aria-label={`Go to card ${i + 1}`}
-                  className={`h-2.5 rounded-full transition-colors ${
-                    i === cardIndex
-                      ? 'w-8 bg-blue-600'
-                      : card.known
-                        ? 'w-2.5 bg-emerald-500'
-                        : 'w-2.5 bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-500'
-                  }`}
-                />
-              ))}
+                  onClick={shuffleDeck}
+                  className="inline-flex items-center justify-center rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
+                  aria-label="Shuffle deck"
+                >
+                  Shuffle
+                </button>
+              )}
+              {currentDeck.cards.length > 0 && (
+                <button
+                  type="button"
+                  onClick={restartDeck}
+                  className="inline-flex items-center justify-center rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
+                  aria-label="Restart deck"
+                >
+                  Restart
+                </button>
+              )}
             </div>
 
             <div className="mt-6 flex justify-center">
               <button
                 type="button"
-                onClick={() => removeCard(currentDeck.id, displayCard.id)}
+                onClick={() => removeCard(currentDeckId || '', displayCard?.id)}
                 className="text-sm text-red-500 transition-colors hover:text-red-700 dark:hover:text-red-400"
               >
                 Delete this card
@@ -434,7 +571,7 @@ export default function FlashcardsPage() {
             </div>
           ) : (
             <p className="text-center text-sm text-gray-500 dark:text-gray-400">
-              No decks yet. Click “New deck” to create your first set.
+              No decks yet. Click "New deck" to create your first set.
             </p>
           )}
         </section>
